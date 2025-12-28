@@ -6,17 +6,12 @@
   "types": "dist/install.d.ts",
   "scripts": {
     "build": "tsc",
-    "postinstall": "node dist/install.js",
     "prepublishOnly": "npm run build"
   },
   "files": [
     "dist/**/*",
     "skill/**/*"
   ],
-  "bin": {
-    "tm-task": "skill/tmux-git-worktree/scripts/tm-task",
-    "tm-recover": "skill/tmux-git-worktree/scripts/tm-recover"
-  },
   "keywords": [
     "tmux",
     "git-worktree",
