@@ -169,7 +169,7 @@ async function promptForLocation(aiTool: AIToolConfig): Promise<InstallLocation>
         name: 'customPath',
         message: 'Enter custom installation path:',
         default: path.join(os.homedir(), aiTool.userDir),
-        filter: (input) => input.replace(/^~/, os.homedir()),
+        filter: (input: string) => input.replace(/^~/, os.homedir()),
       },
     ]);
     return { scope: 'custom', customPath };
@@ -197,7 +197,7 @@ export async function install(): Promise<void> {
         value: tool.value,
         checked: tool.value === 'claude',
       })),
-      validate: (answer) => {
+      validate: (answer: string[]) => {
         if (answer.length < 1) {
           return 'You must choose at least one AI tool.';
         }
