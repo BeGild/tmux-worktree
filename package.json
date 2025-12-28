@@ -1,5 +1,5 @@
 {
-  "name": "@ekko.tmux-git-worktree",
+  "name": "tmux-git-worktree",
   "version": "0.1.0",
   "description": "Claude Code Skill: Tmux + Git Worktree context switcher",
   "main": "dist/install.js",
@@ -24,7 +24,7 @@
     "claude-skill",
     "workflow"
   ],
-  "author": "ekko.bao",
+  "author": "tmux-git-worktree",
   "license": "MIT",
   "engines": {
     "node": ">=14.0.0"

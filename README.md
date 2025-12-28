@@ -5,7 +5,7 @@
 ## 安装
 
 ```bash
-npm install @ekko.tmux-git-worktree
+npm install tmux-git-worktree
 ```
 
 安装时会启动 **TypeScript 交互式安装器**：
