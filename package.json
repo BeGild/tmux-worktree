@@ -1,0 +1,42 @@
+{
+  "name": "@ekko.tmux-git-worktree",
+  "version": "0.1.0",
+  "description": "Claude Code Skill: Tmux + Git Worktree context switcher",
+  "main": "dist/install.js",
+  "types": "dist/install.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "node dist/install.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist/**/*",
+    "skill/**/*"
+  ],
+  "bin": {
+    "tm-task": "skill/tmux-git-worktree/scripts/tm-task",
+    "tm-recover": "skill/tmux-git-worktree/scripts/tm-recover"
+  },
+  "keywords": [
+    "tmux",
+    "git-worktree",
+    "claude-code",
+    "claude-skill",
+    "workflow"
+  ],
+  "author": "ekko.bao",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "inquirer": "^9.2.0",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.0.0",
+    "ora": "^5.4.1"
+  }
+}

@@ -1,0 +1,130 @@
+#!/bin/bash
+# tm-recover - Recovery tool
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+source "${SKILL_ROOT}/scripts/lib/tmux.sh"
+source "${SKILL_ROOT}/scripts/lib/git-worktree.sh"
+source "${SKILL_ROOT}/scripts/lib/cleanup.sh"
+source "${SKILL_ROOT}/scripts/lib/config/tm-task.conf"
+
+usage() {
+    cat <<EOF
+tm-recover - Recovery tool for tm-task sessions
+
+USAGE:
+    tm-recover [command]
+
+COMMANDS:
+    list        List orphaned worktrees and windows
+    windows     List hidden tm-task windows
+    worktrees   List orphaned worktrees
+    clean       Clean up orphaned resources
+    attach      Attach to hidden window
+
+ENVIRONMENT:
+    TM_TASK_WORKTREE_BASE  Worktree dir
+
+EXAMPLES:
+    tm-recover list
+    tm-recover clean
+    tm-recover attach %1
+
+EOF
+    exit 1
+}
+
+log() {
+    echo "[tm-recover] $*"
+}
+
+error() {
+    echo "[tm-recover ERROR] $*" >&2
+    exit 1
+}
+
+cmd_list_windows() {
+    log "Hidden windows:"
+    local hidden
+    hidden=$(tmux_list_hidden_windows)
+
+    if [[ -z "$hidden" ]]; then
+        echo "  (none)"
+        return
+    fi
+
+    echo "$hidden" | while read -r id name; do
+        echo "  $id: $name"
+    done
+}
+
+cmd_list_worktrees() {
+    log "Orphaned worktrees:"
+    local base_dir
+    base_dir=$(git_worktree_get_base_dir)
+
+    if [[ ! -d "$base_dir" ]]; then
+        echo "  (none)"
+        return
+    fi
+
+    for worktree in "${base_dir}"/*; do
+        if [[ -d "$worktree" ]]; then
+            local name
+            name=$(basename "$worktree")
+            echo "  $name: $worktree"
+            if git_worktree_has_changes "$worktree"; then
+                echo "    Has uncommitted changes"
+            else
+                echo "    Clean"
+            fi
+        fi
+    done
+}
+
+cmd_list() {
+    if tmux_inside; then
+        cmd_list_windows
+        echo ""
+    fi
+    cmd_list_worktrees
+}
+
+cmd_clean() {
+    log "Cleaning orphaned resources..."
+
+    read -p "Clean worktrees? [y/N] " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        cleanup_orphans
+    fi
+
+    log "Done"
+}
+
+cmd_attach() {
+    local window_id="$1"
+    if [[ -z "$window_id" ]]; then
+        error "Window ID required"
+    fi
+    tmux select-window -t "$window_id"
+}
+
+main() {
+    local command="${1:-list}"
+
+    case "$command" in
+        list) cmd_list ;;
+        windows) cmd_list_windows ;;
+        worktrees) cmd_list_worktrees ;;
+        clean) cmd_clean ;;
+        attach) cmd_attach "${2:-}" ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"
