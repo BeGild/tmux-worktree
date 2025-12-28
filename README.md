@@ -2,86 +2,141 @@
 
 基于 Tmux + Git Worktree 的上下文交换工作流。
 
-## 安装
+## 快速开始
 
 ```bash
-npm install tmux-git-worktree
+# 使用 npx 运行安装器（无需预先安装）
+npx -y tmux-worktree-install
 ```
 
-安装时会启动 **TypeScript 交互式安装器**：
+安装器会引导你完成：
+1. **选择 AI 工具** - Claude Code 或 Codex
+2. **选择安装位置** - Project (`./.claude/skills/`) 或 User (`~/.claude/skills`)
+3. **链接命令** - 可选链接到 `~/.local/bin/`
 
-1. 选择要配置的 AI 工具
-   - Claude Code (`~/.claude/skills`)
-   - Codex (`~/.codex/skills`)
+## 支持的 AI 工具
 
-2. 为每个 AI 工具选择安装位置
-   - Project: `./{ai-tool}/skills/`
-   - User: `~/{ai-tool}/skills`
-   - Custom: 自定义路径
-
-3. 是否链接命令到 `~/.local/bin/`
-
-**支持的 AI 工具和 Skills 目录：**
-
-| AI 工具 | Project Level | User Level |
-|---------|---------------|------------|
-| Claude Code | `./.claude/skills/` | `~/.claude/skills` |
-| Codex | `./.codex/skills` | `~/.codex/skills` |
+| AI 工具 | Skills 目录 | 上下文文件 |
+|---------|-------------|------------|
+| Claude Code | `~/.claude/skills/` | `CLAUDE.md` |
+| Codex | `~/.codex/skills/` | `AGENTS.md` |
 
 ## 使用
 
-```bash
-tm-task <branch-name> <task-description> [ai-command]
+### 创建任务环境
 
-# Examples:
+```bash
+# 默认使用 Claude Code
 tm-task fix-bug "修复登录接口的 CSRF 漏洞"
+
+# 使用 Codex
 tm-task feature "Add OAuth2" codex
+
+# 不启动 AI，只创建 worktree
+tm-task my-task "description" none
+```
+
+### 恢复工具
+
+```bash
+# 列出孤立资源
+tm-recover list
+
+# 清理孤立 worktree
+tm-recover clean
+```
+
+## 工作原理
+
+```
+┌─────────────────────────────────────────┐
+│  当前 Tmux Pane (工作代码)               │
+│  ┌──────────────┐                       │
+│  │ 你的代码      │                       │
+│  │ (feat-A)     │                       │
+│  └──────────────┘                       │
+└─────────────────────────────────────────┘
+           ↓ tm-task fix-bug "description"
+           ↓
+┌─────────────────────────────────────────┐
+│  Tmux Pane Swap                         │
+│  ┌──────────────┐  ┌──────────────┐    │
+│  │ 原代码       │→ │ 新任务环境   │    │
+│  │ (保存后台)   │  │ fix-bug      │    │
+│  └──────────────┘  └──────────────┘    │
+└─────────────────────────────────────────┘
+           ↓
+    AI 自动加载任务上下文
+    - 任务描述
+    - 项目结构
+    - 分支信息
 ```
 
 ## 目录结构
 
 ```
-tmux-git-worktree/         (npm 项目根)
-├── package.json             (npm 配置)
-├── tsconfig.json            (TS 配置)
-├── README.md
-├── src/                     (TypeScript 源码)
-│   └── install.ts          (交互式安装器)
-├── dist/                    (编译输出 - gitignore)
-└── skill/                   (skill 内容 - 安装到 .claude/skills/)
-    └── tmux-git-worktree/
-        ├── SKILL.md
-        ├── reference.md
-        ├── examples.md
-        └── scripts/
-            ├── tm-task
-            ├── tm-recover
-            └── lib/
-                ├── tmux.sh
-                ├── git-worktree.sh
-                ├── skills.sh
-                ├── cleanup.sh
-                └── config/
-                    ├── tm-task.conf
-                    └── ai-tools.json (自动生成)
+tmux-git-worktree/
+├── package.json             # npm 配置
+├── src/install.ts           # TypeScript 安装器
+├── dist/                    # 编译输出
+└── skill/tmux-git-worktree/
+    ├── SKILL.md             # Skill 定义
+    ├── reference.md         # 详细文档
+    ├── examples.md          # 使用示例
+    └── scripts/
+        ├── tm-task          # 主 CLI
+        ├── tm-recover       # 恢复工具
+        └── lib/
+            ├── ai-launch.sh # AI 启动配置
+            ├── skills.sh    # Skills 生成
+            ├── git-worktree.sh
+            ├── tmux.sh
+            ├── cleanup.sh
+            └── config/
+                └── tm-task.conf
 ```
 
-## 开发
+## 高级配置
+
+### 自定义 AI 启动命令
 
 ```bash
-# 编译 TypeScript
-npm run build
+# 使用环境变量自定义 AI 启动方式
+export TM_TASK_AI_CMD_CLAUDE="claude --model opus"
+export TM_TASK_AI_CMD_CODEX="codex --model gpt-4"
 
-# 本地测试
-npm run build && node dist/install.js
+# 然后正常使用
+tm-task my-task "description"
+```
+
+### 自定义工作目录
+
+```bash
+export TM_TASK_WORKTREE_BASE=~/dev/worktrees
+tm-task my-task "description"
 ```
 
 ## 技术栈
 
 - **TypeScript** - 安装器代码
-- **Inquirer** - 交互式命令行界面
-- **Chalk** - 终端颜色输出
-- **Ora** - 加载动画
-- **fs-extra** - 文件系统操作
+- **Inquirer** - 交互式命令行
+- **Bash** - 核心脚本
+- **Tmux** - 窗口管理
+- **Git Worktree** - 隔离环境
 
-MIT License
+## 开发
+
+```bash
+# 安装依赖
+npm install --ignore-scripts
+
+# 编译
+npm run build
+
+# 本地测试
+node dist/install.js
+```
+
+## License
+
+MIT

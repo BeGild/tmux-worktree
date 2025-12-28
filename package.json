@@ -1,6 +1,6 @@
 {
   "name": "tmux-git-worktree",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Claude Code Skill: Tmux + Git Worktree context switcher",
   "main": "dist/install.js",
   "types": "dist/install.d.ts",
@@ -12,6 +12,9 @@
     "dist/**/*",
     "skill/**/*"
   ],
+  "bin": {
+    "tmux-worktree-install": "dist/install.js"
+  },
   "keywords": [
     "tmux",
     "git-worktree",
