@@ -1,11 +1,12 @@
 {
   "name": "tmux-git-worktree",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Claude Code Skill: Tmux + Git Worktree context switcher",
   "main": "dist/install.js",
   "types": "dist/install.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run add-shebang",
+    "add-shebang": "node -e \"const fs=require('fs');const p='dist/install.js';fs.writeFileSync(p,'#!/usr/bin/env node\\n'+fs.readFileSync(p,'utf8'))\"",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -13,7 +14,8 @@
     "skill/**/*"
   ],
   "bin": {
-    "tmux-worktree-install": "dist/install.js"
+    "tmux-worktree-install": "dist/install.js",
+    "tmux-git-worktree": "dist/install.js"
   },
   "keywords": [
     "tmux",
