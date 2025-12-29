@@ -103,27 +103,44 @@ main() {
         base_branch=$(git_worktree_get_base_branch)
     fi
 
-    local origin_pane
-    origin_pane=$(tmux_capture_current_pane)
-
     local worktree_path
     worktree_path=$(git_worktree_create "$branch_name")
 
-    if [[ "${SKILL_ENABLED}" == "true" ]]; then
-        skills_inject "$worktree_path" "$branch_name" "$task_description" "$original_path" "$ai_command"
+    # Create new window for the task (using branch name as window name)
+    local task_window
+    task_window=$(tmux_create_task_window "$branch_name" "$worktree_path")
+
+    # Setup cleanup with new window mode
+    cleanup_setup "$task_window" "$worktree_path" "$branch_name"
+
+    # Generate initial prompt for AI
+    local initial_prompt=""
+    if [[ "${SKILL_ENABLED:-true}" == "true" ]]; then
+        initial_prompt=$(skills_generate_prompt "$task_description" "$branch_name" "$base_branch" "$worktree_path" "$original_path")
     fi
 
-    local hidden_window
-    hidden_window=$(tmux_create_hidden_window)
-    local task_pane
-    task_pane=$(tmux_get_pane_from_window "$hidden_window")
+    # Display task context
+    cat <<EOF
 
-    cleanup_setup "$origin_pane" "$task_pane" "$hidden_window" "$worktree_path" "$branch_name" "$original_path"
+========================================
+ tm-task: Task Environment Ready
+========================================
 
-    tmux_send_command "$task_pane" "cd '$worktree_path'"
-    tmux_swap_panes "$origin_pane" "$task_pane"
+Branch: $branch_name
+Worktree: $worktree_path
+Base: $base_branch
 
-    ai_launch "$ai_command" "$task_description" "$worktree_path"
+Task: $task_description
+
+Switch to the new window to begin work.
+Close the window when done to auto-cleanup.
+
+========================================
+
+EOF
+
+    # Launch AI tool with initial prompt
+    ai_launch "$ai_command" "$initial_prompt" "$worktree_path" "$task_window"
 }
 
 main "$@"

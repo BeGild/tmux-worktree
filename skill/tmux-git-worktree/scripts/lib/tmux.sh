@@ -5,44 +5,50 @@ tmux_inside() {
     [[ -n "${TMUX:-}" ]]
 }
 
-tmux_capture_current_pane() {
-    if ! tmux_inside; then
-        echo "Not inside tmux" >&2
-        return 1
-    fi
-    tmux display-message -p '#{pane_id}'
+# Get current session name
+tmux_get_session() {
+    tmux display-message -p '#{session_name}'
 }
 
-tmux_create_hidden_window() {
-    local temp_window="tm-task-$$"
-    tmux new-window -d -n "$temp_window" -P -F '#{window_id}'
+# Create new window with task name and switch to it
+tmux_create_task_window() {
+    local task_name="$1"
+    local worktree_path="$2"
+
+    # Create new window and switch to it
+    local window_id
+    window_id=$(tmux new-window -n "$task_name" -P -F '#{window_id}')
+
+    # Change directory in the new window's first pane
+    tmux send-keys -t "$window_id" "cd '$worktree_path'" Enter
+
+    echo "$window_id"
 }
 
-tmux_get_pane_from_window() {
-    local window_id="$1"
-    tmux display-message -t "${window_id}.0" -p '#{pane_id}'
-}
-
-tmux_swap_panes() {
-    local source="$1"
-    local target="$2"
-    tmux swap-pane -s "$source" -t "$target"
-}
-
+# Kill a specific window
 tmux_kill_window() {
     local window_id="$1"
     tmux kill-window -t "$window_id" 2>/dev/null || true
 }
 
-tmux_list_hidden_windows() {
+# Get window ID by name pattern
+tmux_find_window_by_name() {
+    local name_pattern="$1"
     local session
-    session=$(tmux display-message -p '#{session_name}')
-    tmux list-windows -t "$session" -F '#{window_id} #{window_name} #{window_visible}' | \
-        awk '$3 == "0" && $2 ~ /^tm-task-/ {print $1 " " $2}'
+    session=$(tmux_get_session)
+    tmux list-windows -t "$session" -F '#{window_id} #{window_name}' | \
+        awk -v pattern="$name_pattern" '$2 == pattern {print $1}'
 }
 
+# Send command to a window's pane
 tmux_send_command() {
-    local pane="$1"
+    local window_id="$1"
     local cmd="$2"
-    tmux send-keys -t "$pane" "$cmd" Enter
+    tmux send-keys -t "$window_id" "$cmd" Enter
+}
+
+# Check if a window exists
+tmux_window_exists() {
+    local window_id="$1"
+    tmux display-message -t "$window_id" -p '#{window_id}' >/dev/null 2>&1
 }

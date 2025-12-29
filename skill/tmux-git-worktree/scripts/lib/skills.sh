@@ -1,48 +1,7 @@
 #!/bin/bash
-# skills.sh - AI Skills generation
+# skills.sh - AI initial prompt generation
 
-# Get skills directory for AI tool
-skills_get_dir() {
-    local ai_tool="$1"
-    local scope="$2"  # 'user' or 'project'
-    local base_path=""
-
-    case "$scope" in
-        user)
-            base_path="$HOME"
-            ;;
-        project)
-            base_path="${3:-.}"  # default to current directory
-            ;;
-    esac
-
-    case "$ai_tool" in
-        claude)
-            echo "${base_path}/.claude/skills"
-            ;;
-        codex)
-            echo "${base_path}/.codex/skills"
-            ;;
-        *)
-            echo "${base_path}/.${ai_tool}/skills"
-            ;;
-    esac
-}
-
-# Get context file name for AI tool
-skills_get_context_file() {
-    local ai_tool="$1"
-
-    case "$ai_tool" in
-        codex)
-            echo "AGENTS.md"
-            ;;
-        *)
-            echo "AGENTS.md"  # Uppercase the tool name
-            ;;
-    esac
-}
-
+# Generate project structure for context
 skills_generate_structure() {
     local worktree_path="$1"
     cd "$worktree_path"
@@ -55,31 +14,55 @@ skills_generate_structure() {
     fi
 }
 
-skills_generate_task_skill() {
-    local branch_name="$1"
-    local task_description="$2"
-    local worktree_path="$3"
-    local original_branch="$4"
+# Generate initial prompt for AI
+skills_generate_prompt() {
+    local task_description="$1"
+    local branch_name="$2"
+    local base_branch="$3"
+    local worktree_path="$4"
     local original_path="$5"
 
     cat <<EOF
+# Task Environment Setup
+
+You are now in a fresh git worktree for a specific task.
+
+## Task Information
+- **Task:** $task_description
+- **Branch:** $branch_name (base: $base_branch)
+- **Worktree:** $worktree_path
+- **Original Path:** $original_path
+
+## What You Should Do
+
+**IMPORTANT:** Before starting work, generate and display a complete initial prompt that includes:
+
+1. **Understanding the Task** - Restate the task in your own words to confirm understanding
+2. **Planning** - Outline the approach you will take to complete this task
+3. **Implementation Steps** - Break down the work into specific, actionable steps
+4. **Testing Strategy** - Describe how you will verify the implementation
+
+Example initial prompt format:
+\`\`\`
+# Initial Prompt for: <task description>
+
+## My Understanding
+[Restate the task to confirm understanding]
+
+## My Approach
+[Outline the technical approach]
+
+## Implementation Plan
+1. [Step 1]
+2. [Step 2]
+...
+
+## Testing Strategy
+[How to verify the implementation]
+
 ---
-name: task-context
-description: Context for tm-task: ${task_description}
----
-
-# Task Context
-
-## Task
-${task_description}
-
-## Branch
-- Current: \`${branch_name}\`
-- Base: \`${original_branch}\`
-- Original: \`${original_path}\`
-
-## Worktree
-\`${worktree_path}\`
+Ready to proceed. Please confirm or adjust this plan.
+\`\`\`
 
 ## Project Structure
 \`\`\`
@@ -87,65 +70,16 @@ $(skills_generate_structure "$worktree_path")
 \`\`\`
 
 ## Workflow
-1. Review task description
-2. Explore codebase
-3. Implement changes
-4. Test
-5. Commit and push (create PR manually)
-EOF
-}
 
-skills_inject() {
-    local worktree_path="$1"
-    local branch_name="$2"
-    local task_description="$3"
-    local original_path="${4:-$(pwd)}"
-    local ai_tool="${5:-claude}"  # AI tool to use
+1. **Generate Initial Prompt** - Create a complete prompt as shown above
+2. **Wait for Confirmation** - User will approve or adjust the plan
+3. **Execute** - Implement the approved plan
+4. **Test** - Verify the implementation
+5. **Commit** - Commit changes with descriptive message
 
-    if [[ "${SKILL_ENABLED:-true}" != "true" ]]; then
-        return 0
-    fi
+## Cleanup
 
-    # Get AI tool-specific skills directory
-    local worktree_skills_dir
-    worktree_skills_dir=$(skills_get_dir "$ai_tool" project "$worktree_path")
-
-    # Create task-context skill
-    mkdir -p "${worktree_skills_dir}/task-context"
-
-    local original_branch
-    original_branch=$(git_worktree_get_current_branch)
-
-    skills_generate_task_skill \
-        "$branch_name" "$task_description" "$worktree_path" \
-        "$original_branch" "$original_path" \
-        > "${worktree_skills_dir}/task-context/SKILL.md"
-
-    # Smart copy: Only copy if user-level skill doesn't exist
-    local user_skills_dir
-    user_skills_dir=$(skills_get_dir "$ai_tool" user)
-
-    local project_skills_dir
-    project_skills_dir=$(skills_get_dir "$ai_tool" project "$original_path")
-
-    if [[ ! -d "${user_skills_dir}/tmux-git-worktree" ]] && \
-       [[ -d "${project_skills_dir}/tmux-git-worktree" ]]; then
-        # User-level skill not found, copy from project
-        mkdir -p "$worktree_skills_dir"
-        cp -r "${project_skills_dir}/tmux-git-worktree" "${worktree_skills_dir}/"
-    fi
-
-    # Create AI tool-specific context file in worktree root
-    local context_file
-    context_file=$(skills_get_context_file "$ai_tool")
-
-    cat > "${worktree_path}/${context_file}" <<EOF
-# Task: ${task_description}
-
-Working in git worktree for this task.
-- Branch: \`${branch_name}\`
-- Base: \`${original_branch}\`
-
-Use \`task-context\` skill for full details.
+When done, **close the tmux window** (Ctrl+d to exit AI, then the window closes, or use prefix+&).
+The worktree will auto-clean if no uncommitted changes.
 EOF
 }
