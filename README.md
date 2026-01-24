@@ -24,8 +24,14 @@ Edit `~/.config/tmux-worktree/config.yaml` to set your AI tool:
 ```yaml
 ai_command: "claude {prompt}"  # or cursor, aider, etc.
 worktree_dir: ".worktrees"
-branch_prefix: "feature/"
+
+# Text appended to prompts to instruct AI where to save results
+result_prompt_suffix: |
+  Please save your final results to a file named RESULT.md in the current directory.
+  Include a summary of changes, files modified, testing notes, and any next steps.
 ```
+
+**Note:** Branch names use the `feature/` prefix by default (hardcoded in scripts).
 
 ## Usage (via AI Agent)
 
