@@ -44,7 +44,7 @@ cp ./tmux-worktree/assets/config-template.yaml ~/.config/tmux-worktree/config.ya
 Key settings:
 - `ai_command` - The AI tool to launch (use `{prompt}` placeholder)
 - `worktree_dir` - Where worktrees are created
-- `branch_prefix` - Branch name prefix
+- `result_prompt_suffix` - Text appended to prompts for result capture
 
 ## Workflow
 

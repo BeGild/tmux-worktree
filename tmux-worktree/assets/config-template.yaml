@@ -8,9 +8,6 @@ ai_command: "claude {prompt}"
 # Directory for worktree creation (relative to git repo root)
 worktree_dir: ".worktrees"
 
-# Prefix for generated branch names
-branch_prefix: "feature/"
-
 # Text appended to prompts to instruct AI where to save results
 result_prompt_suffix: |
   Please save your final results to a file named RESULT.md in the current directory.

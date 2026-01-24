@@ -23,12 +23,6 @@ Directory where worktrees are created (relative to git repo root).
 
 **Default:** `.worktrees`
 
-### branch_prefix
-
-Prefix for generated branch names.
-
-**Default:** `feature/`
-
 ### result_prompt_suffix
 
 Text appended to every prompt to instruct AI where to save results.
@@ -44,7 +38,8 @@ result_prompt_suffix: |
 ```yaml
 ai_command: "claude {prompt}"
 worktree_dir: ".worktrees"
-branch_prefix: "feature/"
 result_prompt_suffix: |
   Please save your final results to a file named RESULT.md in the current directory.
 ```
+
+**Note:** Branch names use the `feature/` prefix by default (hardcoded in scripts).
