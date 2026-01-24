@@ -23,7 +23,6 @@ fi
 # Find candidates for cleanup
 MAIN_Toplevel=$(git rev-parse --show-toplevel)
 
-CANDIDATES=()
 WT_PATH=""
 BRANCH=""
 
@@ -43,9 +42,6 @@ git worktree list --porcelain | while read -r line; do
       (
         cd "$WT_PATH" 2>/dev/null || exit 0
 
-        # Fix #8: Ensure git commands run from the worktree location
-        MAIN_TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
-
         # Fix #3: Show "(detached)" for worktrees without branch
         DISPLAY_BRANCH="${BRANCH:-}"
         if [ -z "$DISPLAY_BRANCH" ]; then
@@ -55,8 +51,8 @@ git worktree list --porcelain | while read -r line; do
         # Check if branch is merged to main (skip for detached)
         IS_MERGED=0
         if [ -n "$BRANCH" ] && git show-ref --verify --quiet "refs/heads/$BRANCH" 2>/dev/null; then
-          # Fix #5: Use word matching for grep to avoid substring matches
-          IS_MERGED=$(git branch --merged "$MAIN_BRANCH" 2>/dev/null | grep -cw "$BRANCH" || echo "0")
+          # Fix #5: Use exact line matching to avoid substring matches
+          IS_MERGED=$(git branch --merged "$MAIN_BRANCH" --format="%(refname:short)" 2>/dev/null | grep -x "$BRANCH" | wc -l)
         fi
 
         # Fix #6: Check for commits unique to this branch
