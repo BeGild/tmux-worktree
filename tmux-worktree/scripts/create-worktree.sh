@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 TASK_NAME="$1"
 BASE_DIR="${2:-.worktrees}"
@@ -18,6 +18,13 @@ fi
 
 # Generate slug from task name
 SLUG=$(echo "$TASK_NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')
+
+# Validate slug is not empty after sanitization
+if [ -z "$SLUG" ]; then
+  echo "Error: Task name results in empty slug after sanitization" >&2
+  exit 1
+fi
+
 BASE_BRANCH="feature/$SLUG"
 
 # Get existing branches
@@ -40,6 +47,9 @@ fi
 # Create worktree
 WORKTREE_PATH="${BASE_DIR}/${SLUG}"
 
+# Ensure BASE_DIR exists
+mkdir -p "$BASE_DIR"
+
 # Check if worktree path already exists
 if [ -d "$WORKTREE_PATH" ]; then
   # Add timestamp to make unique
@@ -47,7 +57,11 @@ if [ -d "$WORKTREE_PATH" ]; then
   WORKTREE_PATH="${BASE_DIR}/${SLUG}-${TIMESTAMP}"
 fi
 
-git worktree add "$WORKTREE_PATH" -b "$BRANCH_NAME"
+# Create worktree with error handling
+if ! git worktree add "$WORKTREE_PATH" -b "$BRANCH_NAME"; then
+  echo "Error: Failed to create worktree at $WORKTREE_PATH" >&2
+  exit 1
+fi
 
 # Output metadata for caller
 echo "WORKTREE_PATH=$WORKTREE_PATH"
