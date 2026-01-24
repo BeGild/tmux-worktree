@@ -11,6 +11,12 @@ if [ -z "$WORKTREE_PATH" ] || [ -z "$TASK_NAME" ] || [ -z "$PROMPT" ]; then
   exit 1
 fi
 
+# Check if tmux is installed
+command -v tmux >/dev/null 2>&1 || { echo "Error: tmux not installed" >&2; exit 1; }
+
+# Validate worktree path exists
+[ -d "$WORKTREE_PATH" ] || { echo "Error: worktree path not found: $WORKTREE_PATH" >&2; exit 1; }
+
 # Load config
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/tmux-worktree/config.yaml"
 
@@ -23,12 +29,15 @@ fi
 # Parse ai_command from config
 AI_COMMAND=$(grep "^ai_command:" "$CONFIG_FILE" | cut -d':' -f2- | sed 's/^[[:space:]]*//')
 
+# Validate ai_command is present
+[ -n "$AI_COMMAND" ] || { echo "Error: ai_command not found in config file" >&2; exit 1; }
+
 # Parse result_prompt_suffix (multiline)
 RESULT_SUFFIX=""
 while IFS= read -r line; do
   if [[ "$line" == result_prompt_suffix:* ]]; then
     continue
-  elif [[ "$line" == ^[a-z_]*: ]] && [ -n "$RESULT_SUFFIX" ]; then
+  elif [[ "$line" =~ ^[a-z_]+: ]] && [ -n "$RESULT_SUFFIX" ]; then
     break
   elif [ -n "$line" ] || [ -n "$RESULT_SUFFIX" ]; then
     RESULT_SUFFIX="$RESULT_SUFFIX$line"$'\n'
@@ -45,12 +54,12 @@ else
   SESSION_NAME="worktree-session"
 fi
 
-# Window name (truncate to 20 chars)
-WINDOW_NAME=$(echo "$TASK_NAME" | cut -c1-20)
+# Window name (sanitize and truncate to 20 chars)
+WINDOW_NAME=$(echo "$TASK_NAME" | tr -cs 'a-zA-Z0-9-' '-' | cut -c1-20)
 
-# Check if tmux session exists
-if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-  tmux new-session -d -s "$SESSION_NAME" -n "$WINDOW_NAME" -c "$WORKTREE_PATH"
+# Create session or window (avoid race condition)
+if tmux new-session -d -s "$SESSION_NAME" -n "$WINDOW_NAME" -c "$WORKTREE_PATH" 2>/dev/null; then
+  : # Session created successfully
 else
   tmux new-window -t "$SESSION_NAME" -n "$WINDOW_NAME" -c "$WORKTREE_PATH"
 fi
