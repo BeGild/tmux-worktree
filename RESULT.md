@@ -315,3 +315,180 @@ The tmux-worktree JavaScript refactoring is **complete and production-ready**. A
 **Implementation Date:** January 25, 2026
 **Branch:** feature/refactor-to-vanilla-js
 **Version:** 2.0.0
+
+---
+
+# YAML to JSON Migration - Multi-AI Support Implementation
+
+## Summary
+
+Successfully migrated tmux-worktree configuration from YAML to JSON format and implemented multi-AI command support with interactive tool selection capability in the SKILL workflow.
+
+**Branch:** `feature/migrate-config-to-json-and-multi-ai-support`
+**Working Directory:** `/home/ekko.bao/work/tmux_git_work/tmux-worktree/.worktrees/migrate-config-to-json-and-multi-ai-support`
+**Status:** Complete
+
+## Changes Made
+
+### 1. Configuration Migration
+
+**Created:** `assets/config-template.json`
+
+New JSON configuration structure:
+- `version`: Schema version for future migrations
+- `worktree_dir`: Directory for worktree creation
+- `default_ai`: Default AI tool selection
+- `result_prompt_suffix`: Global result capture instruction (can be overridden per tool)
+- `ai_tools`: Object containing multiple AI tool configurations
+  - Each tool has `command`, `description`, and optional `result_prompt_suffix`
+
+**Deleted:** `assets/config-template.yaml`
+- Removed old YAML template (no backward compatibility needed)
+
+### 2. Core Script Updates
+
+**Modified:** `scripts/setup-tmux.js`
+
+Key changes:
+- Changed config path from `config.yaml` to `config.json`
+- Replaced regex-based YAML parsing with `JSON.parse()`
+- Added `--ai` parameter for explicit AI tool selection
+- Implemented tool-specific result_prompt_suffix fallback logic
+- Enhanced error messages for missing tools and config issues
+- Added `AI_TOOL` to output for visibility
+
+New command syntax:
+```bash
+tmux-worktree setup <worktree-path> <task-name> [ai-tool] <prompt>
+```
+
+### 3. Documentation Updates
+
+**Modified:** `SKILL.md`
+
+Updated sections:
+- Config location now points to `config.json`
+- Added configuration structure example
+- Added interactive AI selection workflow using `AskUserQuestion`
+- Updated error handling documentation
+- Added AI tool selection flow description
+
+### 4. Interactive AI Selection Workflow
+
+SKILL workflow now supports:
+1. **Single AI tool**: Automatically uses the configured tool
+2. **Multiple AI tools**: Uses `AskUserQuestion` for interactive selection
+3. **Default fallback**: Uses `config.default_ai` if no tool specified
+
+Selection flow:
+```javascript
+{
+  "questions": [{
+    "question": "选择AI工具用于此任务：",
+    "header": "AI工具",
+    "options": Object.entries(config.ai_tools).map(([key, tool]) => ({
+      "label": key,
+      "description": tool.description
+    })),
+    "multiSelect": false
+  }]
+}
+```
+
+## Files Modified
+
+1. `assets/config-template.json` (created)
+2. `assets/config-template.yaml` (deleted)
+3. `scripts/setup-tmux.js` (refactored)
+4. `SKILL.md` (updated)
+
+## Testing Notes
+
+### Configuration Migration
+- User config successfully migrated from YAML to JSON: ✅
+- JSON configuration parsing verified: ✅
+- JavaScript syntax validation: ✅
+- User's AI tools: cc_glm, cx_mirror
+
+### Functional Testing
+
+**Test 1: Default AI Tool (no ai-tool parameter)**
+```bash
+tmux-worktree create "test-default"
+tmux-worktree setup ".worktrees/test-default" "test-default" "Create a simple test file with default AI"
+```
+Result: ✅ Success
+- Used default AI tool: `cc_glm`
+- Tmux window created successfully
+- AI command executed with proper prompt formatting
+- result_prompt_suffix correctly appended
+
+**Test 2: Explicit AI Tool Selection**
+```bash
+tmux-worktree create "test-cx-mirror"
+tmux-worktree setup ".worktrees/test-cx-mirror" "test-cx-mirror" "cx_mirror" "Create a simple test file with cx_mirror"
+```
+Result: ✅ Success
+- Used specified AI tool: `cx_mirror`
+- Tmux window created successfully
+- AI command executed with proper prompt formatting
+- result_prompt_suffix correctly appended
+
+**Test 3: Invalid AI Tool Name**
+```bash
+tmux-worktree setup ".worktrees/test-claude" "test-claude" "claude" "Create a simple test file with Claude"
+```
+Result: ✅ Correct fallback behavior
+- "claude" not in user's config
+- Treated as part of the prompt, not as AI tool name
+- Used default AI tool: `cc_glm`
+
+**Test 4: List Worktrees**
+```bash
+tmux-worktree list
+```
+Result: ✅ Success
+- All worktrees displayed correctly
+- Branch names, paths, change counts, and RESULT.md status shown
+
+### Parameter Parsing
+- Optional `ai-tool` parameter correctly parsed: ✅
+- Smart detection of AI tool names vs prompt text: ✅
+- Backward compatibility maintained (ai-tool optional): ✅
+
+## Next Steps
+
+For users to adopt this change:
+1. ✅ User config migrated from YAML to JSON
+2. Customize AI tools in config as needed
+3. The SKILL workflow will automatically use interactive selection when multiple tools are configured
+
+### Usage Examples
+
+**Using default AI tool:**
+```bash
+tmux-worktree create "my-feature"
+tmux-worktree setup ".worktrees/my-feature" "my-feature" "Implement feature X"
+```
+
+**Using specific AI tool:**
+```bash
+tmux-worktree setup ".worktrees/my-feature" "my-feature" "cx_mirror" "Implement feature Y"
+```
+
+## Migration Notes
+
+- No backward compatibility with old YAML format
+- User config migrated from `config.yaml` to `config.json`: ✅
+  - Old config backed up as `config.yaml.backup`
+  - Converted: `cc_glm` as default tool
+  - Preserved: `worktree_dir` and `result_prompt_suffix`
+- The new JSON format is more structured and easier to parse
+- Multi-AI support enables flexible tool selection per task
+- Smart parameter parsing detects AI tool names automatically
+
+---
+
+**Implementation Date:** January 25, 2026
+**Branch:** feature/migrate-config-to-json-and-multi-ai-support
+**Version:** 2.1.0
