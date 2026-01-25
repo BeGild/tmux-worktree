@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
+import { ensureConfig } from './lib/config.js';
+
+// 确保配置存在（如果需要配置驱动的功能）
+ensureConfig();
 
 try {
   execSync('git rev-parse --git-dir', { stdio: 'pipe' });
