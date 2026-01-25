@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
 import { mkdirSync, existsSync } from 'fs';
+import { ensureConfig } from './lib/config.js';
 
 // Handle both direct calls and bin wrapper calls
 // Direct: node create-worktree.js "task" → argv[2] = task
 // Wrapper: node bin/tmux-worktree create "task" → argv[2] = "create", argv[3] = task
-const COMMAND_NAMES = ['create', 'setup', 'list', 'cleanup'];
+const COMMAND_NAMES = ['create', 'setup', 'list', 'cleanup', 'query-config'];
 const ARGV_OFFSET = COMMAND_NAMES.includes(process.argv[2]) ? 1 : 0;
 
 const TASK_NAME = process.argv[2 + ARGV_OFFSET];
 const BASE_DIR = process.argv[3 + ARGV_OFFSET] || '.worktrees';
+
+// Ensure config exists
+ensureConfig();
 
 // Validation
 if (!TASK_NAME) {
