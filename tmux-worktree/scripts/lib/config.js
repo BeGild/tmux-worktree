@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = `${process.env.XDG_CONFIG_HOME || `${homedir()}/.config`}/tmux-worktree`;
 const CONFIG_PATH = join(CONFIG_DIR, 'config.json');
-const TEMPLATE_PATH = join(__dirname, '../assets/config-template.json');
+const TEMPLATE_PATH = join(__dirname, '../../assets/config-template.json');
 
 /**
  * 确保配置文件存在，若不存在则从模板自动复制
