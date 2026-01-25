@@ -26,20 +26,40 @@ if [ ! -f "$CONFIG_FILE" ]; then
   exit 1
 fi
 
-# Parse ai_command from config
-AI_COMMAND=$(grep "^ai_command:" "$CONFIG_FILE" | cut -d':' -f2- | sed 's/^[[:space:]]*//')
+# Parse ai_command from config, properly handling YAML quoting
+AI_COMMAND=$(awk '
+  /^ai_command:/ {
+    # Get everything after the first colon
+    val = substr($0, index($0, ":") + 1)
+    # Strip leading whitespace
+    gsub(/^[[:space:]]+/, "", val)
+    # Remove matching outer quotes (single or double)
+    len = length(val)
+    if (len >= 2) {
+      first = substr(val, 1, 1)
+      last = substr(val, len, 1)
+      if ((first == "'"'"'" && last == "'"'"'") || (first == "\"" && last == "\"")) {
+        val = substr(val, 2, len - 2)
+      }
+    }
+    print val
+    exit
+  }
+' "$CONFIG_FILE")
 
 # Validate ai_command is present
 [ -n "$AI_COMMAND" ] || { echo "Error: ai_command not found in config file" >&2; exit 1; }
 
 # Parse result_prompt_suffix (multiline)
 RESULT_SUFFIX=""
+collecting=false
 while IFS= read -r line; do
   if [[ "$line" == result_prompt_suffix:* ]]; then
+    collecting=true
     continue
-  elif [[ "$line" =~ ^[a-z_]+: ]] && [ -n "$RESULT_SUFFIX" ]; then
+  elif [[ "$line" =~ ^[a-z_]+: ]] && [ "$collecting" = true ]; then
     break
-  elif [ -n "$line" ] || [ -n "$RESULT_SUFFIX" ]; then
+  elif [ "$collecting" = true ]; then
     RESULT_SUFFIX="$RESULT_SUFFIX$line"$'\n'
   fi
 done < "$CONFIG_FILE"
@@ -64,9 +84,11 @@ else
   tmux new-window -t "$SESSION_NAME" -n "$WINDOW_NAME" -c "$WORKTREE_PATH"
 fi
 
-# Construct AI command with prompt (escape single quotes in prompt)
-ESCAPED_PROMPT=$(echo "$FULL_PROMPT" | sed "s/'/'\\\\''/g")
-AI_CMD=$(echo "$AI_COMMAND" | sed "s/{prompt}/'${ESCAPED_PROMPT}'/")
+# Construct AI command with prompt
+# Escape single quotes in prompt using single-quote convention: ' -> '\''
+ESCAPED_PROMPT=$(printf '%s' "$FULL_PROMPT" | sed "s/'/'\\\\''/g")
+# Replace {prompt} with the escaped prompt using bash parameter expansion
+AI_CMD="${AI_COMMAND//\{prompt\}/$ESCAPED_PROMPT}"
 
 # Send command to the window
 tmux send-keys -t "$SESSION_NAME:$WINDOW_NAME" "$AI_CMD" C-m

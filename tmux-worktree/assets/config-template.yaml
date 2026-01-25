@@ -3,7 +3,8 @@
 
 # AI tool to launch in the tmux window
 # Use {prompt} as placeholder for the user's prompt
-ai_command: "claude {prompt}"
+# The {prompt} placeholder should be wrapped in single quotes to handle multiline content
+ai_command: "claude '{prompt}'"
 
 # Directory for worktree creation (relative to git repo root)
 worktree_dir: ".worktrees"
