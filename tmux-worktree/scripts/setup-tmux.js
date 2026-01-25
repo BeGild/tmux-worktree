@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
-import { existsSync, readFileSync, statSync } from 'fs';
-import { homedir } from 'os';
+import { existsSync, statSync } from 'fs';
+import { loadConfig } from './lib/config.js';
 
 // Handle both direct calls and bin wrapper calls
-const COMMAND_NAMES = ['create', 'setup', 'list', 'cleanup'];
+const COMMAND_NAMES = ['create', 'setup', 'list', 'cleanup', 'query-config'];
 const ARGV_OFFSET = COMMAND_NAMES.includes(process.argv[2]) ? 1 : 0;
 
 const WORKTREE_PATH = process.argv[2 + ARGV_OFFSET];
@@ -17,23 +17,14 @@ let config = null;
 
 const remainingArgs = process.argv.slice(4 + ARGV_OFFSET);
 
-// First, try to load config to check if the arg is a valid AI tool
-const CONFIG_PATH = `${process.env.XDG_CONFIG_HOME || `${homedir()}/.config`}/tmux-worktree/config.json`;
-if (existsSync(CONFIG_PATH)) {
-  try {
-    config = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8'));
-    const availableTools = Object.keys(config.ai_tools || {});
+// 首先加载配置以检查参数是否为有效的 AI 工具
+config = loadConfig();
+const availableTools = Object.keys(config.ai_tools || {});
 
-    // Check if first arg is a valid AI tool
-    if (remainingArgs.length > 0 && availableTools.includes(remainingArgs[0])) {
-      AI_TOOL = remainingArgs[0];
-      PROMPT = remainingArgs.slice(1).join(' ');
-    } else {
-      PROMPT = remainingArgs.join(' ');
-    }
-  } catch {
-    PROMPT = remainingArgs.join(' ');
-  }
+// 检查第一个参数是否为有效的 AI 工具
+if (remainingArgs.length > 0 && availableTools.includes(remainingArgs[0])) {
+  AI_TOOL = remainingArgs[0];
+  PROMPT = remainingArgs.slice(1).join(' ');
 } else {
   PROMPT = remainingArgs.join(' ');
 }
@@ -66,30 +57,13 @@ try {
   process.exit(1);
 }
 
-// Load config (if not already loaded for arg parsing)
-if (!config) {
-  if (!existsSync(CONFIG_PATH)) {
-    console.error(`Error: Config file not found at ${CONFIG_PATH}`);
-    console.error('Create it from the template: cp ./assets/config-template.json ~/.config/tmux-worktree/config.json');
-    process.exit(1);
-  }
-
-  try {
-    config = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8'));
-  } catch (e) {
-    console.error(`Error: Failed to parse config file at ${CONFIG_PATH}`);
-    console.error(e.message);
-    process.exit(1);
-  }
-}
-
-// Validate config structure
+// 验证配置结构（loadConfig 已经确保配置存在并加载）
 if (!config.ai_tools || Object.keys(config.ai_tools).length === 0) {
   console.error('Error: No AI tools defined in config');
   process.exit(1);
 }
 
-// Select AI tool
+// 选择 AI 工具
 if (!AI_TOOL) {
   AI_TOOL = config.default_ai || Object.keys(config.ai_tools)[0];
 }
@@ -106,12 +80,12 @@ if (!aiConfig.command) {
   process.exit(1);
 }
 
-// Get result suffix (tool-specific or global)
+// 获取结果后缀（工具特定或全局）
 const RESULT_SUFFIX = aiConfig.result_prompt_suffix || config.result_prompt_suffix || '';
 
 const FULL_PROMPT = `${PROMPT}\n\n${RESULT_SUFFIX}`;
 
-// Get session name
+// 获取 session 名称
 let SESSION_NAME = 'worktree-session';
 if (process.env.TMUX) {
   try {
@@ -119,17 +93,17 @@ if (process.env.TMUX) {
   } catch {}
 }
 
-// Window name
+// 窗口名称
 const WINDOW_NAME = TASK_NAME.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 20);
 
-// Create session/window
+// 创建 session/window
 try {
   execSync(`tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}"`, { stdio: 'pipe' });
 } catch {
   execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}"`, { stdio: 'pipe' });
 }
 
-// Escape and send command
+// 转义并发送命令
 const ESCAPED_PROMPT = FULL_PROMPT.replace(/'/g, "'\\''");
 const AI_CMD = aiConfig.command.replace('{prompt}', ESCAPED_PROMPT);
 execSync(`tmux send-keys -t "${SESSION_NAME}:${WINDOW_NAME}" "${AI_CMD}" C-m`, { stdio: 'pipe' });
