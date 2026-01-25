@@ -25,51 +25,7 @@ Use this skill when:
 
 1. **Git repository** - Must be run from within a git repo
 2. **tmux installed** - For window/session management
-3. **AI tool configured** - Set up in `~/.config/tmux-worktree/config.json`
-4. **Config file exists** - Create from template if missing
-
-## Configuration
-
-Config location: `~/.config/tmux-worktree/config.json`
-
-If missing, create from the template:
-
-```bash
-mkdir -p ~/.config/tmux-worktree
-cp ./assets/config-template.json ~/.config/tmux-worktree/config.json
-```
-
-### Configuration Structure
-
-```json
-{
-  "version": "2.0",
-  "worktree_dir": ".worktrees",
-  "default_ai": "claude",
-  "result_prompt_suffix": "Global result suffix...",
-  "ai_tools": {
-    "claude": {
-      "command": "claude '{prompt}'",
-      "description": "Anthropic Claude AI assistant",
-      "result_prompt_suffix": "Optional tool-specific override"
-    },
-    "cursor": {
-      "command": "cursor '{prompt}'",
-      "description": "Cursor AI IDE integration"
-    }
-  }
-}
-```
-
-### Key Settings
-
-- `version` - Config schema version (for future migrations)
-- `worktree_dir` - Directory for worktree creation (relative to git repo root)
-- `default_ai` - Default AI tool to use when none is specified
-- `result_prompt_suffix` - Global text appended to prompts for result capture
-- `ai_tools` - Object containing AI tool configurations
-  - Each tool must have: `command` (with `{prompt}` placeholder) and `description`
-  - Optional `result_prompt_suffix` overrides the global setting
+3. **AI tool configured** - Run `tmux-worktree query-config` to check available tools
 
 ## Workflow
 
@@ -79,16 +35,15 @@ When the user wants to start a new task:
 
 **Step-by-step:**
 
-1. Load the config from `~/.config/tmux-worktree/config.json`
-2. Check available AI tools from `config.ai_tools`
-3. **Interactive AI Selection:**
-   - If only one AI tool is configured, use it automatically
-   - If multiple AI tools are configured, use `AskUserQuestion` to let the user choose
-4. Generate a task slug from the user's description
-5. Run `tmux-worktree create "<task-name>"`
-6. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-7. Run `tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
-8. Inform the user the environment is ready
+1. Query available AI tools by running `tmux-worktree query-config`
+2. **Interactive AI Selection:**
+   - If only one AI tool is available, use it automatically
+   - If multiple AI tools are available, use `AskUserQuestion` to let the user choose
+3. Generate a task slug from the user's description
+4. Run `tmux-worktree create "<task-name>"`
+5. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
+6. Run `tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
+7. Inform the user the environment is ready
 
 **Interactive AI Selection with AskUserQuestion:**
 
@@ -97,8 +52,8 @@ When the user wants to start a new task:
   "questions": [{
     "question": "选择AI工具用于此任务：",
     "header": "AI工具",
-    "options": Object.entries(config.ai_tools).map(([key, tool]) => ({
-      "label": key,
+    "options": aiTools.map(tool => ({
+      "label": tool.name,
       "description": tool.description
     })),
     "multiSelect": false
@@ -109,6 +64,10 @@ When the user wants to start a new task:
 **Example:**
 
 ```bash
+# Query available tools
+tmux-worktree query-config
+# Output: { "default_ai": "claude", "ai_tools": [...] }
+
 # Create the worktree
 tmux-worktree create "add OAuth2 login"
 # Output: WORKTREE_PATH=.worktrees/add-oauth2-login
@@ -144,22 +103,14 @@ Run `tmux-worktree cleanup` - interactively prompts for each candidate.
 - Base: `feature/<task-slug>`
 - If exists: `feature/<task-slug>-2`, `-3`, etc.
 
-## AI Prompt Format
-
-Prompts are automatically appended with result suffix:
-
-1. Tool-specific `result_prompt_suffix` (if defined)
-2. Otherwise, global `result_prompt_suffix` from config
-
 ## Error Handling
 
 - Not in git repo → Clear error message
 - Worktree path exists → Uses timestamp suffix
 - Tmux not running → Creates session automatically
 - AI tool not found → Lists available tools
-- Config file missing → Instructions to create from template
+- Config file missing → Automatically created from template
 
 ## See Also
 
-- Configuration details: See `assets/config-template.json` for all available settings
 - Usage examples: Run `tmux-worktree --help` for usage information
