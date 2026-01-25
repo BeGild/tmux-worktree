@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
 import { createInterface } from 'readline';
+import { ensureConfig } from './lib/config.js';
+
+// 确保配置存在
+ensureConfig();
 
 try {
   execSync('git rev-parse --git-dir', { stdio: 'pipe' });
