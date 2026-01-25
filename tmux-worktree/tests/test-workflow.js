@@ -29,6 +29,18 @@ execSync('git config user.email "test@test.com"', { stdio: 'pipe' });
 execSync('echo "# test" > README.md', { stdio: 'pipe' });
 execSync('git add . && git commit -q -m "init"', { stdio: 'pipe' });
 
+// Test query-config
+console.log('Test: Query config');
+const queryOutput = execSync(`node ${CLI} query-config`, { encoding: 'utf-8' });
+const queryResult = JSON.parse(queryOutput);
+
+if (!queryResult.ai_tools || !Array.isArray(queryResult.ai_tools)) {
+  console.error('✗ query-config output invalid');
+  process.exit(1);
+}
+
+console.log(`✓ Config queried: ${queryResult.ai_tools.length} AI tools available\n`);
+
 // Test create
 console.log('Test: Create worktree');
 const out = execSync(`node ${CLI} create "test feature"`, { encoding: 'utf-8' });
