@@ -1,12 +1,6 @@
 ---
 name: tmux-worktree
 description: Creates isolated git worktree development environments with tmux sessions and AI tool integration. Use when starting new features, bug fixes, or experiments that need isolated git context and AI assistance. Automatically manages branch naming, creates dedicated tmux windows, and captures AI results.
-
-metadata:
-  author: ekko.bao
-  version: "1.0.0"
-
-compatibility: Requires git, tmux, and a configured AI tool (claude, cursor, aider, etc.)
 ---
 
 ## Overview
@@ -38,7 +32,7 @@ Config location: `~/.config/tmux-worktree/config.yaml`
 If missing, create from the template:
 ```bash
 mkdir -p ~/.config/tmux-worktree
-cp ./tmux-worktree/assets/config-template.yaml ~/.config/tmux-worktree/config.yaml
+cp ./assets/config-template.yaml ~/.config/tmux-worktree/config.yaml
 ```
 
 Key settings:
@@ -55,20 +49,20 @@ When the user wants to start a new task:
 **Step-by-step:**
 
 1. Generate a task slug from the user's description
-2. Run `./tmux-worktree/scripts/create-worktree.sh "<task-name>"`
+2. Run `./scripts/create-worktree.sh "<task-name>"`
 3. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-4. Run `./tmux-worktree/scripts/setup-tmux.sh "<worktree-path>" "<task-name>" "<prompt>"`
+4. Run `./scripts/setup-tmux.sh "<worktree-path>" "<task-name>" "<prompt>"`
 5. Inform the user the environment is ready
 
 **Example:**
 ```bash
 # Create the worktree
-./tmux-worktree/scripts/create-worktree.sh "add OAuth2 login"
+./scripts/create-worktree.sh "add OAuth2 login"
 # Output: WORKTREE_PATH=.worktrees/add-oauth2-login
 #         BRANCH_NAME=feature/add-oauth2-login
 
 # Setup tmux with AI
-./tmux-worktree/scripts/setup-tmux.sh ".worktrees/add-oauth2-login" "add-oauth2-login" "Add OAuth2 login"
+./scripts/setup-tmux.sh ".worktrees/add-oauth2-login" "add-oauth2-login" "Add OAuth2 login"
 # Output: SESSION=worktree-session WINDOW=add-oauth2-login
 ```
 
@@ -76,7 +70,7 @@ When the user wants to start a new task:
 
 When the user asks about active worktrees:
 
-Run `./tmux-worktree/scripts/list-worktrees.sh` and display the output.
+Run `./scripts/list-worktrees.sh` and display the output.
 
 ### 3. View AI Results
 
@@ -90,7 +84,7 @@ When the user asks about results from a specific task:
 
 When the user wants to clean up:
 
-Run `./tmux-worktree/scripts/cleanup.sh` - interactively prompts for each candidate.
+Run `./scripts/cleanup.sh` - interactively prompts for each candidate.
 
 ## Branch Naming Strategy
 
@@ -110,4 +104,4 @@ Prompts are automatically appended with result suffix from config.
 ## See Also
 
 - Configuration details: See `assets/config-template.yaml` for all available settings
-- Usage examples: Run `./tmux-worktree/scripts/create-worktree.sh --help` for usage information
+- Usage examples: Run `./scripts/create-worktree.sh --help` for usage information
