@@ -49,20 +49,20 @@ When the user wants to start a new task:
 **Step-by-step:**
 
 1. Generate a task slug from the user's description
-2. Run `./scripts/create-worktree.sh "<task-name>"`
+2. Run `tmux-worktree create "<task-name>"`
 3. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-4. Run `./scripts/setup-tmux.sh "<worktree-path>" "<task-name>" "<prompt>"`
+4. Run `tmux-worktree setup "<worktree-path>" "<task-name>" "<prompt>"`
 5. Inform the user the environment is ready
 
 **Example:**
 ```bash
 # Create the worktree
-./scripts/create-worktree.sh "add OAuth2 login"
+tmux-worktree create "add OAuth2 login"
 # Output: WORKTREE_PATH=.worktrees/add-oauth2-login
 #         BRANCH_NAME=feature/add-oauth2-login
 
 # Setup tmux with AI
-./scripts/setup-tmux.sh ".worktrees/add-oauth2-login" "add-oauth2-login" "Add OAuth2 login"
+tmux-worktree setup ".worktrees/add-oauth2-login" "add-oauth2-login" "Add OAuth2 login"
 # Output: SESSION=worktree-session WINDOW=add-oauth2-login
 ```
 
@@ -70,7 +70,7 @@ When the user wants to start a new task:
 
 When the user asks about active worktrees:
 
-Run `./scripts/list-worktrees.sh` and display the output.
+Run `tmux-worktree list` and display the output.
 
 ### 3. View AI Results
 
@@ -84,7 +84,7 @@ When the user asks about results from a specific task:
 
 When the user wants to clean up:
 
-Run `./scripts/cleanup.sh` - interactively prompts for each candidate.
+Run `tmux-worktree cleanup` - interactively prompts for each candidate.
 
 ## Branch Naming Strategy
 
@@ -104,4 +104,4 @@ Prompts are automatically appended with result suffix from config.
 ## See Also
 
 - Configuration details: See `assets/config-template.yaml` for all available settings
-- Usage examples: Run `./scripts/create-worktree.sh --help` for usage information
+- Usage examples: Run `tmux-worktree --help` for usage information

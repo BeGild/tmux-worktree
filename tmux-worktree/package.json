@@ -1,0 +1,8 @@
+{
+  "name": "tmux-worktree",
+  "version": "2.0.0",
+  "type": "module",
+  "bin": {
+    "tmux-worktree": "./bin/tmux-worktree"
+  }
+}
