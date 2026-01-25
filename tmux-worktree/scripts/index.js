@@ -6,11 +6,12 @@ export async function run(args) {
     setup: () => import('./setup-tmux.js'),
     list: () => import('./list-worktrees.js'),
     cleanup: () => import('./cleanup.js'),
+    'query-config': () => import('./query-config.js'),
   };
 
   if (!commands[cmd]) {
     console.error(`Unknown command: ${cmd}`);
-    console.error('Usage: tmux-worktree <create|setup|list|cleanup>');
+    console.error('Usage: tmux-worktree <create|setup|list|cleanup|query-config>');
     process.exit(1);
   }
 
