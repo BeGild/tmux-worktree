@@ -5,6 +5,7 @@ An Agent Skill that creates isolated git worktree development environments with 
 ## Overview
 
 tmux-worktree automates the creation of isolated development environments for AI-assisted tasks. Each task gets:
+
 - A fresh git worktree with a uniquely named branch
 - A dedicated tmux window with your AI tool pre-loaded
 - Automatic result capture via RESULT.md files
@@ -22,7 +23,7 @@ cd tmux-worktree
 Edit `~/.config/tmux-worktree/config.yaml` to set your AI tool:
 
 ```yaml
-ai_command: "claude {prompt}"  # or cursor, aider, etc.
+ai_command: "claude {prompt}" # or cursor, aider, etc.
 worktree_dir: ".worktrees"
 
 # Text appended to prompts to instruct AI where to save results

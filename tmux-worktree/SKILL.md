@@ -25,7 +25,7 @@ Use this skill when:
 
 1. **Git repository** - Must be run from within a git repo
 2. **tmux installed** - For window/session management
-3. **AI tool configured** - Run `tmux-worktree query-config` to check available tools
+3. **AI tool configured** - Run `./bin/tmux-worktree query-config` to check available tools
 
 ## Workflow
 
@@ -35,14 +35,14 @@ When the user wants to start a new task:
 
 **Step-by-step:**
 
-1. Query available AI tools by running `tmux-worktree query-config`
+1. Query available AI tools by running `./bin/tmux-worktree query-config`
 2. **Interactive AI Selection:**
    - If only one AI tool is available, use it automatically
    - If multiple AI tools are available, use `AskUserQuestion` to let the user choose
 3. Generate a task slug from the user's description
-4. Run `tmux-worktree create "<task-name>"`
+4. Run `./bin/tmux-worktree create "<task-name>"`
 5. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-6. Run `tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
+6. Run `./bin/mux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
 7. Inform the user the environment is ready
 
 **Interactive AI Selection with AskUserQuestion:**
@@ -65,16 +65,16 @@ When the user wants to start a new task:
 
 ```bash
 # Query available tools
-tmux-worktree query-config
+./bin/tmux-worktree query-config
 # Output: { "default_ai": "claude", "ai_tools": [...] }
 
 # Create the worktree
-tmux-worktree create "add OAuth2 login"
+./bin/tmux-worktree create "add OAuth2 login"
 # Output: WORKTREE_PATH=.worktrees/add-oauth2-login
 #         BRANCH_NAME=feature/add-oauth2-login
 
 # Setup tmux with AI (claude selected interactively)
-tmux-worktree setup ".worktrees/add-oauth2-login" "add-oauth2-login" "claude" "Add OAuth2 login"
+./bin/tmux-worktree setup ".worktrees/add-oauth2-login" "add-oauth2-login" "claude" "Add OAuth2 login"
 # Output: SESSION=worktree-session WINDOW=add-oauth2-login AI_TOOL=claude
 ```
 
