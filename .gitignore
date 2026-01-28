@@ -7,3 +7,4 @@ RESULT.md
 # Test artifacts
 *.tmp
 tmp/
+/superpowers/
