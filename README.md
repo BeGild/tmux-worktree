@@ -46,9 +46,7 @@ Edit `~/.config/tmux-worktree/config.json` to set your AI tool:
 ```json
 {
   "version": "2.0",
-  "worktree_dir": ".worktrees",
   "default_ai": "claude",
-  "result_prompt_suffix": "## RESULT_SUMMARY\nPlease save your final results to a file named RESULT.md in the current directory.\n\n1.Include a summary of changes, files modified, testing notes, and any next steps.\n2. Length <= 300 characters",
   "ai_tools": {
     "claude": {
       "command": "claude '{prompt}'",
