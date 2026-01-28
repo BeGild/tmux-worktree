@@ -12,8 +12,31 @@ tmux-worktree automates the creation of isolated development environments for AI
 
 ## Installation
 
+### Via Plugin Marketplace (Recommended)
+
 ```bash
-git clone https://github.com/ekko.bao/tmux-worktree.git
+# Add the marketplace
+/plugin marketplace add BeGild/ekko-marketplace
+
+# Install the plugin
+/plugin install tmux-worktree@ekko-marketplace
+```
+
+### Via Local Plugin Directory
+
+```bash
+# Clone the repository
+git clone https://github.com/BeGild/tmux-worktree.git
+cd tmux-worktree
+
+# Install with local plugin directory
+claude --plugin-dir ./
+```
+
+### Legacy Installation
+
+```bash
+git clone https://github.com/BeGild/tmux-worktree.git
 cd tmux-worktree
 ./install.sh
 ```

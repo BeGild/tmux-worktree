@@ -1,0 +1,13 @@
+{
+  "name": "tmux-worktree",
+  "description": "Creates isolated git worktree development environments with tmux sessions. Automatically manages branch naming, creates dedicated tmux windows with AI tool integration.",
+  "version": "1.0.0",
+  "author": {
+    "name": "BeGild",
+    "email": "yucang_bao@126.com"
+  },
+  "homepage": "https://github.com/BeGild/tmux-worktree",
+  "repository": "https://github.com/BeGild/tmux-worktree",
+  "license": "MIT",
+  "keywords": ["git", "worktree", "tmux", "isolation", "development", "ai", "workflow"]
+}
