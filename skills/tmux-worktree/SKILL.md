@@ -3,6 +3,10 @@ name: tmux-worktree
 description: Creates isolated git worktree development environments with tmux sessions. Use when starting new features, bug fixes, or experiments that need isolated git context. Automatically manages branch naming, creates dedicated tmux windows.
 ---
 
+## Skill Root Location
+
+**SKILL_ROOT** = Directory containing this SKILL.md file (NOT `pwd`)
+
 ## Overview
 
 This skill creates isolated development environments for AI-assisted tasks. Each task gets:
@@ -25,7 +29,7 @@ Use this skill when:
 
 1. **Git repository** - Must be run from within a git repo
 2. **tmux installed** - For window/session management
-3. **AI tool configured** - Run `./bin/tmux-worktree query-config` to check available tools
+3. **AI tool configured** - Run `${SKILL_ROOT}/bin/tmux-worktree query-config` to check available tools
 
 ### Project Setup (First Time Only)
 
@@ -68,14 +72,14 @@ Start a new isolated development environment.
    # If missing, add: .worktrees/ and RESULT.md
    ```
 
-1. Query available AI tools: `./bin/tmux-worktree query-config`
+1. Query available AI tools: `${SKILL_ROOT}/bin/tmux-worktree query-config`
 2. **Interactive AI Selection:**
    - If only one AI tool → use it automatically
    - If multiple AI tools → use `AskUserQuestion` to let user choose
 3. Generate a task slug from user's description
-4. Run: `./bin/tmux-worktree create "<task-name>"`
+4. Run: `${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"`
 5. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-6. Run: `./bin/tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
+6. Run: `${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
 7. Inform user the environment is ready
 
 **AI Responsibility:**
@@ -105,11 +109,11 @@ Remove completed worktrees after preserving results.
 
 **Step-by-step:**
 
-1. **Query status:** `./bin/tmux-worktree list`
+1. **Query status:** `${SKILL_ROOT}/bin/tmux-worktree list`
    - Always show current state before cleanup
 2. **Review results:** `cat .worktrees/<task-name>/RESULT.md` (if exists)
    - Offer to show RESULT.md contents for tasks being removed
-3. **Interactive cleanup:** `./bin/tmux-worktree cleanup`
+3. **Interactive cleanup:** `${SKILL_ROOT}/bin/tmux-worktree cleanup`
    - Guides user through prompts for each candidate
 
 **AI Responsibility:**
@@ -140,23 +144,23 @@ Remove completed worktrees after preserving results.
 
 ```bash
 # Query available AI tools
-./bin/tmux-worktree query-config
+${SKILL_ROOT}/bin/tmux-worktree query-config
 # Output: { "default_ai": "...", "ai_tools": {...} }
 
 # Create a new worktree
-./bin/tmux-worktree create "<task-name>"
+${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"
 # Output: WORKTREE_PATH=.worktrees/<task-slug>
 #         BRANCH_NAME=feature/<task-slug>
 
 # Setup tmux session with AI
-./bin/tmux-worktree setup "<worktree-path>" "<task-name>" [ai-tool] "<prompt>"
+${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" [ai-tool] "<prompt>"
 # Output: SESSION=worktree-session WINDOW=<task-slug> AI_TOOL=<tool>
 
 # List active worktrees
-./bin/tmux-worktree list
+${SKILL_ROOT}/bin/tmux-worktree list
 
 # Cleanup completed worktrees (interactive)
-./bin/tmux-worktree cleanup
+${SKILL_ROOT}/bin/tmux-worktree cleanup
 ```
 
 ### Interactive AI Selection Format
@@ -179,19 +183,19 @@ Remove completed worktrees after preserving results.
 
 ```bash
 # 1. Create the worktree
-./bin/tmux-worktree create "add OAuth2 login"
+${SKILL_ROOT}/bin/tmux-worktree create "add OAuth2 login"
 # Output: WORKTREE_PATH=.worktrees/add-oauth2-login
 #         BRANCH_NAME=feature/add-oauth2-login
 
 # 2. Setup tmux with AI
-./bin/tmux-worktree setup ".worktrees/add-oauth2-login" "add-oauth2-login" "claude" "Add OAuth2 login"
+${SKILL_ROOT}/bin/tmux-worktree setup ".worktrees/add-oauth2-login" "add-oauth2-login" "claude" "Add OAuth2 login"
 # Output: SESSION=worktree-session WINDOW=add-oauth2-login AI_TOOL=claude
 
 # 3. (Later) Check status
-./bin/tmux-worktree list
+${SKILL_ROOT}/bin/tmux-worktree list
 
 # 4. (Later) Cleanup
-./bin/tmux-worktree cleanup
+${SKILL_ROOT}/bin/tmux-worktree cleanup
 ```
 
 ## See Also
