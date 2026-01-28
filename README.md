@@ -12,33 +12,31 @@ tmux-worktree automates the creation of isolated development environments for AI
 
 ## Installation
 
-### Via Plugin Marketplace (Recommended)
+### Via Claude Code Plugin (Recommended)
 
 ```bash
-# Add the marketplace
-/plugin marketplace add BeGild/ekko-marketplace
+# Install directly from GitHub
+/plugin install https://github.com/BeGild/tmux-worktree.git
 
-# Install the plugin
-/plugin install tmux-worktree@ekko-marketplace
+# Or install from local directory
+/plugin install /path/to/tmux-worktree
 ```
 
-### Via Local Plugin Directory
+After installation, use the skill via slash command:
+
+```
+/tmux-worktree:tmux-worktree
+```
+
+### Manual Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/BeGild/tmux-worktree.git
 cd tmux-worktree
 
-# Install with local plugin directory
-claude --plugin-dir ./
-```
-
-### Legacy Installation
-
-```bash
-git clone https://github.com/BeGild/tmux-worktree.git
-cd tmux-worktree
-./install.sh
+# Add bin directory to PATH (optional)
+export PATH="$PATH:$(pwd)/skills/tmux-worktree/bin"
 ```
 
 ## Configuration
@@ -62,7 +60,29 @@ Edit `~/.config/tmux-worktree/config.json` to set your AI tool:
 
 **Note:** Branch names use the `feature/` prefix by default.
 
-## Usage (via AI Agent)
+## Usage
+
+### Via Slash Command
+
+After installing the plugin, use the slash command:
+
+```
+/worktree
+```
+
+Example session:
+
+```
+User: /worktree
+
+Agent: I'll help you create an isolated worktree environment.
+       [Prompts for task description]
+       [Creates worktree at .worktrees/<task-name>]
+       [Creates branch feature/<task-name>]
+       [Opens tmux window with AI tool ready]
+```
+
+### Via AI Agent
 
 When working with an AI agent that supports Agent Skills:
 
