@@ -133,49 +133,42 @@ def main():
         result_content = f"""# Task Summary
 
 ## Status
-<!-- 请选择一个: In Progress / Completed / Blocked / Abandoned -->
-<!-- - In Progress: 任务进行中，需要继续工作 -->
-<!-- - Completed: 任务已完成，工作区应该干净 -->
-<!-- - Blocked: 遇到阻塞，需要人工介入 -->
-<!-- - Abandoned: 任务中止，不再继续 -->
+请选择一个: In Progress / Completed / Blocked / Abandoned
 
 ## Overview
-<!-- 请描述你做了什么 -->
+请描述你做了什么
 
 ## Changes Made
-<!-- 请总结实现的更改 -->
+请总结实现的更改
 
 ## Files Modified
-<!-- AUTO-GENERATED: 请勿修改以下内容 -->
 {files_list}
-<!-- END AUTO-GENERATED -->
-<!-- 注：如果是成果文件请先提交，如果是临时文件在此说明 -->
+
+注：如果是成果文件请先提交，如果是临时文件在此说明
 
 ## Commits
-<!-- AUTO-GENERATED: 请勿修改以下内容 -->
 当前分支: `{current_branch or 'unknown'}`
 
 最近提交:
 ```
 {recent_commits or '无'}
 ```
-<!-- END AUTO-GENERATED -->
 
 ## Testing
-<!-- 请描述测试过程和结果 -->
+请描述测试过程和结果
 
 ## Blockers / Issues
-<!-- 如果状态是 Blocked，描述问题。否则写 `None` -->
+如果状态是 Blocked，描述问题。否则写 `None`
 
 ## Next Steps
-<!-- 请描述接下来需要做什么 -->
+请描述接下来需要做什么
 
 ## Cleanup Recommendation
-<!-- 请选择一个并说明:
+请选择一个并说明:
 - Ready to merge → 可以合并到主分支
 - Continue working → 保留 worktree 继续工作
 - Cleanup recommended → 可以安全删除 worktree
-- Needs review → 清理前需要人工审查 -->
+- Needs review → 清理前需要人工审查
 
 ---
 _生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
@@ -202,7 +195,6 @@ _生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 
 ## 注意
 
-- `<!-- AUTO-GENERATED -->` 标记的内容为自动生成，请勿修改
 - **Completed 状态必须工作区干净（无未提交文件）才能停止**
 - Blocked/Abandoned 状态可以随时停止"""
 
