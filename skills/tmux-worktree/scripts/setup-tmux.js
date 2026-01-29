@@ -167,7 +167,7 @@ try {
 }
 
 // 等待 shell 完全初始化（修复偶现的 shell 命令执行失败问题）
-execSync('sleep 0.3', { stdio: 'pipe' });
+execSync('sleep 0.5', { stdio: 'pipe' });
 
 // ========== Invoke AI via cat prompt.md ==========
 // Use relative path since tmux session's working directory is WORKTREE_PATH
