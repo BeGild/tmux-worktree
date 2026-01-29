@@ -167,8 +167,8 @@ try {
 }
 
 // ========== Invoke AI via cat prompt.md ==========
-const PROMPT_FILE = `${TMUX_DIR}/prompt.md`;
-const AI_CMD = `cat ${PROMPT_FILE} | ${aiConfig.command}`;
+// Use relative path since tmux session's working directory is WORKTREE_PATH
+const AI_CMD = `cat .tmux-worktree/prompt.md | ${aiConfig.command}`;
 execSync(`tmux send-keys -t "${SESSION_NAME}:${WINDOW_NAME}" "${AI_CMD}" C-m`, { stdio: 'pipe' });
 // ========== End of AI invocation ==========
 
