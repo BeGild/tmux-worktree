@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 import json
-import time
+from datetime import datetime
 
 def run_git(cmd):
     """Run git command and return output"""
@@ -35,8 +35,6 @@ def main():
         except:
             input_data = {}
 
-        stop_hook_active = input_data.get("stop_hook_active", False)
-
         # Get current working directory
         current_dir = os.getcwd()
 
@@ -47,19 +45,17 @@ def main():
 
         # Check if this is a worktree (not the main repo)
         if os.path.isdir(git_dir):
-            # .git is a directory → main repo, not a worktree
             sys.exit(0)
         elif not os.path.isfile(git_dir):
             sys.exit(0)
 
-        # 检查 RESULT.md 是否存在且已更新
         result_file = os.path.join(current_dir, "RESULT.md")
+
+        # 检查 RESULT.md 是否已存在且有 Status 字段
         if os.path.exists(result_file):
-            # 检查文件是否有 Status 字段（说明AI已经按格式更新过）
             with open(result_file, 'r', encoding='utf-8') as f:
                 content = f.read()
                 if "## Status" in content:
-                    # AI已更新过RESULT.md，允许停止
                     sys.exit(0)
 
         # 自动检测 git 状态
@@ -67,9 +63,9 @@ def main():
         modified_files = run_git(["git", "diff", "--name-only"])
         staged_files = run_git(["git", "diff", "--cached", "--name-only"])
         current_branch = run_git(["git", "rev-parse", "--abbrev-ref", "HEAD"])
-        recent_commits = run_git(["git", "log", "--oneline", "-5"])
+        recent_commits = run_git(["git", "log", "--oneline", "-10"])
 
-        # 构建未提交文件列表
+        # 构建文件列表
         uncommitted_files = []
         if untracked_files:
             uncommitted_files.extend([f"  - [未跟踪] {f}" for f in untracked_files.split('\n') if f])
@@ -78,87 +74,82 @@ def main():
         if staged_files:
             uncommitted_files.extend([f"  - [已暂存] {f}" for f in staged_files.split('\n') if f])
 
-        # ===========================================================================
-        # Prompt for AI - Generate RESULT.md
-        # ===========================================================================
+        files_list = "\n".join(uncommitted_files) if uncommitted_files else "  (无)"
 
-        if uncommitted_files:
-            files_section = f"""## 当前工作区状态
+        # 生成 RESULT.md 内容
+        result_content = f"""# Task Summary
 
-你有以下未提交的文件：
-{chr(10).join(uncommitted_files)}
+## Status
+<!-- 请选择一个: In Progress / Completed / Blocked / Abandoned -->
 
-请检查这些文件：
-- 如果是本次任务的成果，请提交它们
-- 如果是临时文件或无关修改，请在 RESULT.md 的 "Files Modified" 部分标记为 "无需提交"
-"""
-        else:
-            files_section = """## 当前工作区状态
+## Overview
+<!-- 请描述你做了什么 -->
 
-工作区干净，没有未提交的文件。
-"""
+## Changes Made
+<!-- 请总结实现的更改 -->
 
-        INSTRUCTION = f"""你正在一个 git worktree 环境中工作。在停止之前，你**必须创建 RESULT.md** 来记录你的工作进展。
+## Files Modified
+<!-- AUTO-GENERATED: 请勿修改以下内容 -->
+{files_list}
+<!-- END AUTO-GENERATED -->
+<!-- 注：如果是成果文件请先提交，如果是临时文件在此说明 -->
 
-{files_section}## 检查清单
+## Commits
+<!-- AUTO-GENERATED: 请勿修改以下内容 -->
+当前分支: `{current_branch or 'unknown'}`
 
-创建 RESULT.md 之前，我已经自动为你收集了以下信息：
-
-- **当前分支**: `{current_branch or 'unknown'}`
-- **最近提交**:
+最近提交:
 ```
 {recent_commits or '无'}
 ```
-
-## 重要提示
-
-- 如果有未提交的成果文件，请先提交
-- 临时文件或测试文件请在 RESULT.md 中标记为"无需提交"
-- 创建完 RESULT.md 后，你可以停止
-
-## RESULT.md 模板
-
-请按以下格式创建 RESULT.md：
-
-```markdown
-# Task Summary
-
-## Status
-[选择一个: In Progress / Completed / Blocked / Abandoned]
-
-## Overview
-[简要描述你做了什么]
-
-## Changes Made
-[总结实现的更改]
-
-## Files Modified
-[列出修改的文件 - 临时文件标注为"无需提交"]
-
-## Commits
-[列出本次任务的 commits - 使用上面"最近提交"中的相关提交]
+<!-- END AUTO-GENERATED -->
 
 ## Testing
-[描述测试过程和结果]
+<!-- 请描述测试过程和结果 -->
 
 ## Blockers / Issues
-[如果状态是 Blocked，描述问题。否则写 `None`]
+<!-- 如果状态是 Blocked，描述问题。否则写 `None` -->
 
 ## Next Steps
-[接下来需要做什么？]
+<!-- 请描述接下来需要做什么 -->
 
 ## Cleanup Recommendation
-[选择一个并说明:
+<!-- 请选择一个并说明:
 - Ready to merge → 可以合并到主分支
 - Continue working → 保留 worktree 继续工作
 - Cleanup recommended → 可以安全删除 worktree
-- Needs review → 清理前需要人工审查]
-```
+- Needs review → 清理前需要人工审查 -->
+
+---
+_生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 """
 
-        # ===========================================================================
-        # Block stop and show prompt
-        # ===========================================================================
+        # 写入 RESULT.md
+        with open(result_file, 'w', encoding='utf-8') as f:
+            f.write(result_content)
+
+        # 提示 AI 填写内容
+        INSTRUCTION = """已为你生成 **RESULT.md** 模板，git信息已自动填入。
+
+## 你需要做的
+
+请编辑 RESULT.md，填写以下字段：
+
+1. **Status**: 选择任务状态 (In Progress/Completed/Blocked/Abandoned)
+2. **Overview**: 简要描述你做了什么
+3. **Changes Made**: 总结实现的更改
+4. **Testing**: 描述测试过程和结果
+5. **Blockers / Issues**: 如有阻塞问题请描述
+6. **Next Steps**: 接下来需要做什么
+7. **Cleanup Recommendation**: 选择清理建议
+
+## 注意
+
+- `<!-- AUTO-GENERATED -->` 标记的内容为自动生成，请勿修改
+- 未提交的成果文件请先提交
+- 临时文件在 "Files Modified" 部分标注为"无需提交"
+
+填写完成后即可停止。"""
 
         output = {
             "decision": "block",
@@ -169,7 +160,6 @@ def main():
         sys.exit(0)
 
     except Exception as e:
-        # Log error to stderr and exit gracefully
         print(f"[ERROR] Hook failed: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(0)
 
