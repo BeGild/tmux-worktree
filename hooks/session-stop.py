@@ -58,6 +58,11 @@ def main():
         except:
             input_data = {}
 
+        # 检查 CLAUDE_PROJECT_DIR 是否在 .worktrees 目录下
+        project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+        if not project_dir or "/.worktrees/" not in project_dir:
+            sys.exit(0)
+
         # Get current working directory
         current_dir = os.getcwd()
 
