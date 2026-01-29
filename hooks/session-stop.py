@@ -8,11 +8,35 @@ https://gist.github.com/alexfazio/653c5164d726987569ee8229a19f451f
 """
 
 import os
+import subprocess
 import sys
 import json
+import time
+
+def run_git(cmd):
+    """Run git command and return output"""
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=os.getcwd(),
+            timeout=5
+        )
+        return result.stdout.strip()
+    except:
+        return ""
 
 def main():
     try:
+        # 读取 hook 输入
+        try:
+            input_data = json.loads(sys.stdin.read())
+        except:
+            input_data = {}
+
+        stop_hook_active = input_data.get("stop_hook_active", False)
+
         # Get current working directory
         current_dir = os.getcwd()
 
@@ -22,96 +46,125 @@ def main():
             sys.exit(0)
 
         # Check if this is a worktree (not the main repo)
-        # In a worktree, .git is a file, not a directory
-        if os.path.isfile(git_dir):
-            # .git is a file → this is a worktree
-            pass
-        elif os.path.isdir(git_dir):
+        if os.path.isdir(git_dir):
             # .git is a directory → main repo, not a worktree
             sys.exit(0)
-        else:
-            # No .git found
+        elif not os.path.isfile(git_dir):
             sys.exit(0)
 
+        # 检查 RESULT.md 是否存在且已更新
+        result_file = os.path.join(current_dir, "RESULT.md")
+        if os.path.exists(result_file):
+            # 检查文件是否有 Status 字段（说明AI已经按格式更新过）
+            with open(result_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if "## Status" in content:
+                    # AI已更新过RESULT.md，允许停止
+                    sys.exit(0)
+
+        # 自动检测 git 状态
+        untracked_files = run_git(["git", "ls-files", "--others", "--exclude-standard"])
+        modified_files = run_git(["git", "diff", "--name-only"])
+        staged_files = run_git(["git", "diff", "--cached", "--name-only"])
+        current_branch = run_git(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+        recent_commits = run_git(["git", "log", "--oneline", "-5"])
+
+        # 构建未提交文件列表
+        uncommitted_files = []
+        if untracked_files:
+            uncommitted_files.extend([f"  - [未跟踪] {f}" for f in untracked_files.split('\n') if f])
+        if modified_files:
+            uncommitted_files.extend([f"  - [已修改] {f}" for f in modified_files.split('\n') if f])
+        if staged_files:
+            uncommitted_files.extend([f"  - [已暂存] {f}" for f in staged_files.split('\n') if f])
+
         # ===========================================================================
-        # RESULT.md Template - Modify this section to change the output format
+        # Prompt for AI - Generate RESULT.md
         # ===========================================================================
 
-        RESULT_TEMPLATE = """# Task Summary
+        if uncommitted_files:
+            files_section = f"""## 当前工作区状态
+
+你有以下未提交的文件：
+{chr(10).join(uncommitted_files)}
+
+请检查这些文件：
+- 如果是本次任务的成果，请提交它们
+- 如果是临时文件或无关修改，请在 RESULT.md 的 "Files Modified" 部分标记为 "无需提交"
+"""
+        else:
+            files_section = """## 当前工作区状态
+
+工作区干净，没有未提交的文件。
+"""
+
+        INSTRUCTION = f"""你正在一个 git worktree 环境中工作。在停止之前，你**必须创建 RESULT.md** 来记录你的工作进展。
+
+{files_section}## 检查清单
+
+创建 RESULT.md 之前，我已经自动为你收集了以下信息：
+
+- **当前分支**: `{current_branch or 'unknown'}`
+- **最近提交**:
+```
+{recent_commits or '无'}
+```
+
+## 重要提示
+
+- 如果有未提交的成果文件，请先提交
+- 临时文件或测试文件请在 RESULT.md 中标记为"无需提交"
+- 创建完 RESULT.md 后，你可以停止
+
+## RESULT.md 模板
+
+请按以下格式创建 RESULT.md：
+
+```markdown
+# Task Summary
 
 ## Status
-[Select one: In Progress / Completed / Blocked / Abandoned]
+[选择一个: In Progress / Completed / Blocked / Abandoned]
 
 ## Overview
-[Brief description of what you were working on]
+[简要描述你做了什么]
 
 ## Changes Made
-[Summary of changes implemented]
+[总结实现的更改]
 
 ## Files Modified
-- [List modified files - use `git status --short` to check]
+[列出修改的文件 - 临时文件标注为"无需提交"]
 
 ## Commits
-- [List commits made - use `git log --oneline` to check]
+[列出本次任务的 commits - 使用上面"最近提交"中的相关提交]
 
 ## Testing
-[Describe testing performed and results]
+[描述测试过程和结果]
 
 ## Blockers / Issues
-[If Status is Blocked, describe the issue. Otherwise, write `None`]
+[如果状态是 Blocked，描述问题。否则写 `None`]
 
 ## Next Steps
-[What needs to be done next?]
+[接下来需要做什么？]
 
 ## Cleanup Recommendation
-[Select one and explain:
-- Ready to merge → Can be merged to main branch
-- Continue working → Keep worktree for more work
-- Cleanup recommended → Safe to remove worktree
-- Needs review → Requires human review before cleanup]"""
+[选择一个并说明:
+- Ready to merge → 可以合并到主分支
+- Continue working → 保留 worktree 继续工作
+- Cleanup recommended → 可以安全删除 worktree
+- Needs review → 清理前需要人工审查]
+```
+"""
 
         # ===========================================================================
-        # Instructions for AI - Modify this section to change the behavior
+        # Block stop and show prompt
         # ===========================================================================
 
-        INSTRUCTION = """You are in a git worktree environment. Before stopping, you MUST create or update RESULT.md with a comprehensive summary of your work.
-
-## Checklist
-
-Before creating RESULT.md, run these commands to gather information:
-
-1. Check git status: `git status --short`
-2. Check commits: `git log --oneline -10`
-3. Check branch: `git rev-parse --abbrev-ref HEAD`
-4. Check diff: `git diff --stat`
-
-## Important Notes
-
-- Be honest about the status - if blocked, explain why
-- If you made no progress, state that clearly
-- The cleanup recommendation helps with worktree management
-- This file will be read by other AI agents or humans reviewing the work
-
-After creating RESULT.md, you may stop."""
-
-        # ===========================================================================
-        # Build the full prompt and generate JSON output
-        # ===========================================================================
-
-        # Combine instruction and template
-        full_prompt = f"""{INSTRUCTION}
-
-## Required RESULT.md Structure
-
-{RESULT_TEMPLATE}"""
-
-        # Output JSON - proper format for Stop hook
         output = {
             "decision": "block",
-            "reason": full_prompt
+            "reason": INSTRUCTION
         }
 
-        # Print to stdout
         print(json.dumps(output, ensure_ascii=False, indent=2))
         sys.exit(0)
 
