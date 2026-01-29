@@ -163,19 +163,21 @@ if (process.env.TMUX) {
 // 窗口名称
 const WINDOW_NAME = TASK_NAME.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 20);
 
-// 创建 session/window
+// 创建 session/window（不指定工作目录，后续通过 cd 切换）
 try {
-  execSync(`tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_ABS_PATH}"`, { stdio: 'pipe' });
+  execSync(`tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}"`, { stdio: 'pipe' });
 } catch {
-  execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_ABS_PATH}"`, { stdio: 'pipe' });
+  execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}"`, { stdio: 'pipe' });
 }
 
 // 等待 shell 完全初始化（修复偶现的 shell 命令执行失败问题）
 execSync('sleep 0.5', { stdio: 'pipe' });
 
-// ========== Invoke AI via cat prompt.md ==========
-// Use relative path since tmux session's working directory is WORKTREE_PATH
+// ========== Switch to worktree directory and invoke AI ==========
+// 先切换到工作目录，然后执行 AI 命令
+const CD_CMD = `cd "${WORKTREE_ABS_PATH}"`;
 const AI_CMD = `cat .tmux-worktree/prompt.md | ${aiConfig.command}`;
+execSync(`tmux send-keys -t "${SESSION_NAME}:${WINDOW_NAME}" "${CD_CMD}" C-m`, { stdio: 'pipe' });
 execSync(`tmux send-keys -t "${SESSION_NAME}:${WINDOW_NAME}" "${AI_CMD}" C-m`, { stdio: 'pipe' });
 // ========== End of AI invocation ==========
 
