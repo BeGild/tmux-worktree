@@ -14,8 +14,8 @@ try {
 }
 
 // Header
-const row = (a, b, c, d) => `${a.padEnd(30)} ${b.padEnd(20)} ${c.padEnd(5)} ${d}`;
-console.log(row('Branch', 'Worktree', 'Changes', 'Result'));
+const row = (a, b, c, d) => `${a.padEnd(30)} ${b.padEnd(20)} ${c.padEnd(8)} ${d}`;
+console.log(row('Branch', 'Worktree', 'Changes', 'Status'));
 console.log(row('-------', '-------', '------', '------'));
 
 const output = execSync('git worktree list --porcelain', { encoding: 'utf-8' });
@@ -40,14 +40,23 @@ for (const block of blocks) {
     status = statusOut.split('\n').filter(Boolean).length;
   } catch {}
 
-  // Check RESULT.md
-  let result = '-';
+  // Check progress.md
+  let progressStatus = '-';
   try {
-    const resultPath = `${path}/RESULT.md`;
-    const content = readFileSync(resultPath, 'utf-8');
-    const firstLine = content.split('\n')[0].slice(0, 50);
-    result = `✓ ${firstLine}`;
-  } catch {}
+    const progressPath = `${path}/.tmux-worktree/progress.md`;
+    const content = readFileSync(progressPath, 'utf-8');
 
-  console.log(row(displayBranch, wtShort, String(status), result));
+    // 提取 Status 字段
+    const statusMatch = content.match(/## Status\s+\*\*(In Progress|Completed|Blocked|Abandoned)\*\*/);
+    if (statusMatch) {
+      progressStatus = statusMatch[1];
+    } else {
+      progressStatus = 'Unknown';
+    }
+  } catch {
+    // progress.md 不存在
+    progressStatus = '-';
+  }
+
+  console.log(row(displayBranch, wtShort, String(status), progressStatus));
 }
