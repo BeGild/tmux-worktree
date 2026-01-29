@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 import json
+import re
 from datetime import datetime
 
 def run_git(cmd):
@@ -34,7 +35,13 @@ def extract_status(content):
 
     status_section = content.split("## Status")[1].split("##")[0]
 
-    for status in ["Completed", "Blocked", "Abandoned", "In Progress"]:
+    # 优先查找加粗的状态 **Status**
+    for status in ["In Progress", "Completed", "Blocked", "Abandoned"]:
+        if f"**{status}**" in status_section:
+            return status
+
+    # 如果没有找到加粗状态，返回第一个匹配的状态（向后兼容）
+    for status in ["In Progress", "Completed", "Blocked", "Abandoned"]:
         if status in status_section:
             return status
 
