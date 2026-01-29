@@ -115,11 +115,9 @@ After creating RESULT.md, you may stop."""
         print(json.dumps(output, ensure_ascii=False, indent=2))
         sys.exit(0)
 
-    except SystemExit:
-        # Re-raise SystemExit (from sys.exit)
-        raise
-    except Exception:
-        # Silent fail on any other exception
+    except Exception as e:
+        # Log error to stderr and exit gracefully
+        print(f"[ERROR] Hook failed: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(0)
 
 if __name__ == "__main__":
