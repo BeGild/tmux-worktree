@@ -12,6 +12,7 @@ description: Creates isolated git worktree development environments with tmux se
 This skill creates isolated development environments for AI-assisted tasks. Each task gets:
 
 - A fresh git worktree with a uniquely named branch
+- **Parent branch tracking** - Records the branch you started from (for correct merge targets)
 - A dedicated tmux window with your AI tool pre-loaded
 - Interactive AI tool selection (when multiple tools configured)
 - **Prompt persistence via `.tmux-worktree/prompt.md` for task traceability**
@@ -188,6 +189,45 @@ Remove completed worktrees after preserving results.
 - Base: `feature/<task-slug>`
 - If exists: `feature/<task-slug>-2`, `-3`, etc.
 
+## Parent Branch Tracking
+
+When creating a worktree, the system records which branch you started from (parent branch). This solves the common problem where a PR from branch B (created from branch A) incorrectly targets `main` instead of branch A.
+
+### How it works:
+
+1. **Creation**: `create-worktree.js` captures the current branch as `PARENT_BRANCH`
+2. **Storage**: `setup-tmux.js` writes parent branch to `.tmux-worktree/progress.md`
+3. **Cleanup**: `cleanup.js` checks merge status against the parent branch (not always main)
+
+### Progress.md includes:
+
+```markdown
+## Branch Info
+- **Current Branch**: feature/my-task
+- **Parent Branch**: feature/parent-task  <-- The branch you started from
+- **Main Branch**: master
+
+## Merge Target
+应当合并到: **feature/parent-task** (父分支)
+
+> ⚠️ **重要**: 创建 PR 时请确认目标分支是 **feature/parent-task** 而不是 master!
+```
+
+### Creating PRs with correct target:
+
+When ready to create a PR, check the parent branch in `.tmux-worktree/progress.md`, then:
+
+```bash
+# Get parent branch
+git config --get "branch.$(git branch --show-current).parent"
+
+# Or read from progress.md
+grep "Parent Branch" .tmux-worktree/progress.md
+
+# Create PR with gh CLI (example)
+gh pr create --base "<parent-branch>" --title "..."
+```
+
 ## Error Handling
 
 - Not in git repo → Clear error message
@@ -209,6 +249,8 @@ ${SKILL_ROOT}/bin/tmux-worktree query-config
 ${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"
 # Output: WORKTREE_PATH=.worktrees/<task-slug>
 #         BRANCH_NAME=feature/<task-slug>
+#         PARENT_BRANCH=feature/parent-branch  <-- The branch you started from
+#         MAIN_BRANCH=master
 
 # Setup tmux session with AI
 ${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" [ai-tool] "<structured-prompt>"

@@ -34,6 +34,25 @@ try {
   process.exit(1);
 }
 
+// Get parent branch (current branch when worktree is created)
+let PARENT_BRANCH = '';
+try {
+  PARENT_BRANCH = execSync('git branch --show-current', { encoding: 'utf-8' }).trim();
+} catch {}
+
+// Get main/master branch name for reference
+let MAIN_BRANCH = 'main';
+try {
+  MAIN_BRANCH = execSync('git symbolic-ref refs/remotes/origin/HEAD', { encoding: 'utf-8' })
+    .replace('refs/remotes/origin/', '').trim();
+} catch {
+  try {
+    execSync('git show-ref --verify --quiet refs/heads/main', { stdio: 'pipe' });
+  } catch {
+    MAIN_BRANCH = 'master';
+  }
+}
+
 // Slugify - match shell behavior exactly (underscores become hyphens)
 const SLUG = TASK_NAME.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
 if (!SLUG) {
@@ -86,3 +105,5 @@ try {
 
 console.log(`WORKTREE_PATH=${WORKTREE_PATH}`);
 console.log(`BRANCH_NAME=${BRANCH_NAME}`);
+console.log(`PARENT_BRANCH=${PARENT_BRANCH}`);
+console.log(`MAIN_BRANCH=${MAIN_BRANCH}`);

@@ -100,15 +100,29 @@ try {
   // Generate progress.md empty template
   const PROGRESS_FILE = `${TMUX_DIR}/progress.md`;
   const timestamp = new Date().toISOString();
+  const mergeTarget = PARENT_BRANCH && PARENT_BRANCH !== MAIN_BRANCH
+    ? `应当合并到: **${PARENT_BRANCH}** (父分支)\n备选: ${MAIN_BRANCH} (如果 ${PARENT_BRANCH} 已被合并)`
+    : `应当合并到: **${MAIN_BRANCH}**`;
   const progressTemplate = `# Task Progress
 
 ## Status
 **In Progress** | Completed | Blocked | Abandoned
 
+## Branch Info
+- **Current Branch**: {当前分支名}
+- **Parent Branch**: ${PARENT_BRANCH || MAIN_BRANCH}
+- **Main Branch**: ${MAIN_BRANCH}
+
+## Merge Target
+${mergeTarget}
+
+> ⚠️ **重要**: 创建 PR 时请确认目标分支是 **${PARENT_BRANCH || MAIN_BRANCH}** 而不是 ${MAIN_BRANCH}!
+
 ## Progress Log
 
 ### [${timestamp}] 任务启动
 - 阅读 .tmux-worktree/prompt.md 了解任务目标
+- 父分支: ${PARENT_BRANCH || '未检测到 (可能是detached state)'}
 - 开始工作...
 
 ### [添加更多里程碑...]
@@ -136,7 +150,7 @@ try {
 
 ### Cleanup Recommendation
 选择一个并说明:
-- **Ready to merge** → 可以合并到主分支
+- **Ready to merge** → 可以合并到 **${PARENT_BRANCH || MAIN_BRANCH}**
 - **Continue working** → 保留 worktree 继续工作
 - **Cleanup recommended** → 可以安全删除 worktree
 - **Needs review** → 清理前需要人工审查
@@ -162,6 +176,10 @@ if (process.env.TMUX) {
 
 // 窗口名称
 const WINDOW_NAME = TASK_NAME.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 20);
+
+// Get parent branch from environment or default to main/master
+let PARENT_BRANCH = process.env.TMUX_WORKTREE_PARENT_BRANCH || '';
+let MAIN_BRANCH = process.env.TMUX_WORKTREE_MAIN_BRANCH || 'main';
 
 // 创建 session/window（不指定工作目录，后续通过 cd 切换）
 try {
