@@ -166,6 +166,9 @@ try {
   execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}"`, { stdio: 'pipe' });
 }
 
+// 等待 shell 完全初始化（修复偶现的 shell 命令执行失败问题）
+execSync('sleep 0.3', { stdio: 'pipe' });
+
 // ========== Invoke AI via cat prompt.md ==========
 // Use relative path since tmux session's working directory is WORKTREE_PATH
 const AI_CMD = `cat .tmux-worktree/prompt.md | ${aiConfig.command}`;
