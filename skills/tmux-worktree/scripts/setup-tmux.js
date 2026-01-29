@@ -3,14 +3,6 @@ import { execSync } from 'child_process';
 import { existsSync, statSync, mkdirSync, writeFileSync } from 'fs';
 import { loadConfig } from './lib/config.js';
 
-// 内部延迟函数，不依赖外部 sleep 命令
-function delay(ms) {
-  const start = Date.now();
-  while (Date.now() - start < ms) {
-    // Busy wait - simple blocking delay
-  }
-}
-
 // Handle both direct calls and bin wrapper calls
 const COMMAND_NAMES = ['create', 'setup', 'list', 'cleanup', 'query-config'];
 const ARGV_OFFSET = COMMAND_NAMES.includes(process.argv[2]) ? 1 : 0;
@@ -175,8 +167,7 @@ try {
 }
 
 // 等待 shell 完全初始化（修复偶现的 shell 命令执行失败问题）
-// 使用内部延迟函数，不依赖外部 sleep 命令
-delay(500);
+execSync('sleep 0.5', { stdio: 'pipe' });
 
 // ========== Invoke AI via cat prompt.md ==========
 // Use relative path since tmux session's working directory is WORKTREE_PATH
