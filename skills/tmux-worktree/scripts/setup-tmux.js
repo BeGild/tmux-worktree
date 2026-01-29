@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'child_process';
 import { existsSync, statSync, mkdirSync, writeFileSync } from 'fs';
+import { resolve } from 'path';
 import { loadConfig } from './lib/config.js';
 
 // Handle both direct calls and bin wrapper calls
@@ -57,6 +58,9 @@ try {
   process.exit(1);
 }
 
+// Convert to absolute path to avoid tmux cwd issues
+const WORKTREE_ABS_PATH = resolve(WORKTREE_PATH);
+
 // 验证配置结构（loadConfig 已经确保配置存在并加载）
 if (!config.ai_tools || Object.keys(config.ai_tools).length === 0) {
   console.error('Error: No AI tools defined in config');
@@ -81,7 +85,7 @@ if (!aiConfig.command) {
 }
 
 // ========== Create .tmux-worktree directory and write files ==========
-const TMUX_DIR = `${WORKTREE_PATH}/.tmux-worktree`;
+const TMUX_DIR = `${WORKTREE_ABS_PATH}/.tmux-worktree`;
 
 try {
   // Create directory if not exists
@@ -161,9 +165,9 @@ const WINDOW_NAME = TASK_NAME.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 20);
 
 // 创建 session/window
 try {
-  execSync(`tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}"`, { stdio: 'pipe' });
+  execSync(`tmux new-session -d -s "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_ABS_PATH}"`, { stdio: 'pipe' });
 } catch {
-  execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_PATH}"`, { stdio: 'pipe' });
+  execSync(`tmux new-window -t "${SESSION_NAME}" -n "${WINDOW_NAME}" -c "${WORKTREE_ABS_PATH}"`, { stdio: 'pipe' });
 }
 
 // 等待 shell 完全初始化（修复偶现的 shell 命令执行失败问题）
