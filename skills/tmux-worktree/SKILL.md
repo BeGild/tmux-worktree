@@ -14,7 +14,60 @@ This skill creates isolated development environments for AI-assisted tasks. Each
 - A fresh git worktree with a uniquely named branch
 - A dedicated tmux window with your AI tool pre-loaded
 - Interactive AI tool selection (when multiple tools configured)
-- Automatic result capture via RESULT.md files
+- **Prompt persistence via `.tmux-worktree/prompt.md` for task traceability**
+- **Progress tracking via `.tmux-worktree/progress.md`**
+
+## Prompt Template
+
+Before calling `tmux-worktree setup`, **you MUST structure your prompt** following this template:
+
+```markdown
+# Task: {任务名称}
+
+## Context
+- **Branch**: {分支名}
+- **Worktree**: {worktree相对路径}
+
+## Objective
+{清晰描述任务目标，1-2句话}
+
+## Original Request
+{用户的原始请求内容}
+
+## Constraints
+- 工作目录限制在当前 worktree 内
+- 完成后更新 .tmux-worktree/progress.md 记录结果
+- 遵循项目的代码规范
+
+## Success Criteria
+{明确任务完成的验收标准}
+```
+
+**Example:**
+```
+# Task: Add OAuth2 Login
+
+## Context
+- **Branch**: feature/add-oauth2-login
+- **Worktree**: .worktrees/add-oauth2-login
+
+## Objective
+Implement OAuth2 authentication flow allowing users to login with Google and GitHub.
+
+## Original Request
+用户要求添加 Google 和 GitHub 的 OAuth2 登录功能...
+
+## Constraints
+- 工作目录限制在当前 worktree 内
+- 完成后更新 .tmux-worktree/progress.md 记录结果
+- 遵循项目的代码规范
+
+## Success Criteria
+- 用户可以使用 Google 账号登录
+- 用户可以使用 GitHub 账号登录
+- Token 正确保存到数据库
+- 测试覆盖主要场景
+```
 
 ## When to Use
 
@@ -41,13 +94,13 @@ Before creating your first worktree, ensure your `.gitignore` includes:
 # Worktrees
 .worktrees/
 
-# AI task results
-RESULT.md
+# Tmux-worktree task management
+.tmux-worktree/
 ```
 
-**Verify with:** `cat .gitignore | grep -E "worktrees|RESULT.md"`
+**Verify with:** `cat .gitignore | grep -E "worktrees|tmux-worktree"`
 
-If missing, add these entries to prevent worktree directories and result files from being committed.
+If missing, add these entries to prevent worktree directories and task files from being committed.
 
 ## Worktree Task Lifecycle
 
@@ -68,19 +121,22 @@ Start a new isolated development environment.
 0. **Pre-check**: Verify `.gitignore` is configured
 
    ```bash
-   cat .gitignore | grep -E "worktrees|RESULT.md"
-   # If missing, add: .worktrees/ and RESULT.md
+   cat .gitignore | grep -E "worktrees|tmux-worktree"
+   # If missing, add: .worktrees/ and .tmux-worktree/
    ```
 
-1. Query available AI tools: `${SKILL_ROOT}/bin/tmux-worktree query-config`
-2. **Interactive AI Selection:**
+1. **Generate structured prompt** (follow the Prompt Template above)
+2. Query available AI tools: `${SKILL_ROOT}/bin/tmux-worktree query-config`
+3. **Interactive AI Selection:**
    - If only one AI tool → use it automatically
    - If multiple AI tools → use `AskUserQuestion` to let user choose
-3. Generate a task slug from user's description
-4. Run: `${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"`
-5. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
-6. Run: `${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<prompt>"`
-7. Inform user the environment is ready
+4. Generate a task slug from user's description
+5. Run: `${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"`
+6. Parse output for `WORKTREE_PATH` and `BRANCH_NAME`
+7. Run: `${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" "<ai-tool>" "<structured-prompt>"`
+   - **Note**: The script will save your prompt to `.tmux-worktree/prompt.md`
+   - **Note**: The script will invoke AI via `cat .tmux-worktree/prompt.md | ai-tool`
+8. Inform user the environment is ready
 
 **AI Responsibility:**
 
@@ -97,7 +153,8 @@ AI-assisted development happens in the isolated worktree.
 - All work stays in the worktree directory
 - Branch is isolated from main/master
 - AI tool runs in dedicated tmux window
-- RESULT.md captures final outcomes
+- **`.tmux-worktree/prompt.md` contains the original task definition**
+- **`.tmux-worktree/progress.md` tracks progress and final results**
 
 **Transition trigger:** User signals completion or asks to clean up
 
@@ -111,15 +168,16 @@ Remove completed worktrees after preserving results.
 
 1. **Query status:** `${SKILL_ROOT}/bin/tmux-worktree list`
    - Always show current state before cleanup
-2. **Review results:** `cat .worktrees/<task-name>/RESULT.md` (if exists)
-   - Offer to show RESULT.md contents for tasks being removed
+2. **Review progress:** `cat .worktrees/<task-name>/.tmux-worktree/progress.md` (if exists)
+   - Offer to show progress.md contents for tasks being removed
 3. **Interactive cleanup:** `${SKILL_ROOT}/bin/tmux-worktree cleanup`
    - Guides user through prompts for each candidate
 
 **AI Responsibility:**
 
 - ALWAYS run `list` before cleanup to show current state
-- Offer to display RESULT.md before removing worktrees
+- **Now shows Status from progress.md (In Progress/Completed/Blocked/Abandoned)**
+- Offer to display progress.md before removing worktrees
 - Guide user through interactive cleanup prompts
 - Confirm removal was successful
 
@@ -153,8 +211,10 @@ ${SKILL_ROOT}/bin/tmux-worktree create "<task-name>"
 #         BRANCH_NAME=feature/<task-slug>
 
 # Setup tmux session with AI
-${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" [ai-tool] "<prompt>"
+${SKILL_ROOT}/bin/tmux-worktree setup "<worktree-path>" "<task-name>" [ai-tool] "<structured-prompt>"
 # Output: SESSION=worktree-session WINDOW=<task-slug> AI_TOOL=<tool>
+# Note: Script saves prompt to .tmux-worktree/prompt.md
+# Note: Script invokes AI via cat .tmux-worktree/prompt.md | ai-tool
 
 # List active worktrees
 ${SKILL_ROOT}/bin/tmux-worktree list
