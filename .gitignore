@@ -1,8 +1,8 @@
 # Worktrees
 .worktrees/
 
-# AI task results
-RESULT.md
+# Tmux-worktree task management
+.tmux-worktree/
 
 # Test artifacts
 *.tmp
