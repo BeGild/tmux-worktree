@@ -27,6 +27,29 @@ def run_git(cmd):
     except:
         return ""
 
+def extract_status(content):
+    """从 RESULT.md 中提取 Status 字段"""
+    if "## Status" not in content:
+        return None
+
+    # 找到 Status 部分
+    status_section = content.split("## Status")[1].split("##")[0]
+
+    # 检查是否包含有效状态
+    for status in ["Completed", "Blocked", "Abandoned", "In Progress"]:
+        if status in status_section:
+            return status
+
+    return None
+
+def has_uncommitted_changes():
+    """检查是否有未提交的更改"""
+    untracked = run_git(["git", "ls-files", "--others", "--exclude-standard"])
+    modified = run_git(["git", "diff", "--name-only"])
+    staged = run_git(["git", "diff", "--cached", "--name-only"])
+
+    return bool(untracked or modified or staged)
+
 def main():
     try:
         # 读取 hook 输入
@@ -51,11 +74,41 @@ def main():
 
         result_file = os.path.join(current_dir, "RESULT.md")
 
-        # 检查 RESULT.md 是否已存在且有 Status 字段
+        # 检查 RESULT.md 是否已存在
         if os.path.exists(result_file):
             with open(result_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-                if "## Status" in content:
+                status = extract_status(content)
+
+                # 方案B: 停止条件
+                if status == "Completed":
+                    # Completed 状态：需要工作区干净才能停止
+                    if not has_uncommitted_changes():
+                        sys.exit(0)  # 允许停止
+                    else:
+                        # 有未提交文件，要求先提交
+                        output = {
+                            "decision": "block",
+                            "reason": "## 任务已完成但有未提交的文件\n\n请先提交你的工作成果，然后再停止。"
+                        }
+                        print(json.dumps(output, ensure_ascii=False, indent=2))
+                        sys.exit(0)
+
+                elif status == "Blocked":
+                    # Blocked 状态：允许停止（需要人工介入）
+                    sys.exit(0)
+
+                elif status == "Abandoned":
+                    # Abandoned 状态：允许停止
+                    sys.exit(0)
+
+                elif status == "In Progress":
+                    # In Progress 状态：要求继续工作
+                    output = {
+                        "decision": "block",
+                        "reason": "## 任务还在进行中\n\n当前 Status 是 **In Progress**，请继续完成任务。\n\n如果任务确实已完成，请将 Status 改为 **Completed**。"
+                    }
+                    print(json.dumps(output, ensure_ascii=False, indent=2))
                     sys.exit(0)
 
         # 自动检测 git 状态
@@ -81,6 +134,10 @@ def main():
 
 ## Status
 <!-- 请选择一个: In Progress / Completed / Blocked / Abandoned -->
+<!-- - In Progress: 任务进行中，需要继续工作 -->
+<!-- - Completed: 任务已完成，工作区应该干净 -->
+<!-- - Blocked: 遇到阻塞，需要人工介入 -->
+<!-- - Abandoned: 任务中止，不再继续 -->
 
 ## Overview
 <!-- 请描述你做了什么 -->
@@ -133,23 +190,21 @@ _生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}_
 
 ## 你需要做的
 
-请编辑 RESULT.md，填写以下字段：
+请编辑 RESULT.md，首先选择正确的 **Status**：
 
-1. **Status**: 选择任务状态 (In Progress/Completed/Blocked/Abandoned)
-2. **Overview**: 简要描述你做了什么
-3. **Changes Made**: 总结实现的更改
-4. **Testing**: 描述测试过程和结果
-5. **Blockers / Issues**: 如有阻塞问题请描述
-6. **Next Steps**: 接下来需要做什么
-7. **Cleanup Recommendation**: 选择清理建议
+1. **In Progress** → 任务进行中，填写后系统会要求你继续工作
+2. **Completed** → 任务已完成，**必须先提交所有成果文件**，然后才能停止
+3. **Blocked** → 遇到阻塞无法继续，可以立即停止（等待人工介入）
+4. **Abandoned** → 任务中止，可以立即停止
+
+然后填写其他字段：
+- Overview, Changes Made, Testing, Blockers, Next Steps, Cleanup Recommendation
 
 ## 注意
 
 - `<!-- AUTO-GENERATED -->` 标记的内容为自动生成，请勿修改
-- 未提交的成果文件请先提交
-- 临时文件在 "Files Modified" 部分标注为"无需提交"
-
-填写完成后即可停止。"""
+- **Completed 状态必须工作区干净（无未提交文件）才能停止**
+- Blocked/Abandoned 状态可以随时停止"""
 
         output = {
             "decision": "block",
