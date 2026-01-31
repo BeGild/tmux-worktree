@@ -100,9 +100,15 @@ try {
   // Generate progress.md empty template
   const PROGRESS_FILE = `${TMUX_DIR}/progress.md`;
   const timestamp = new Date().toISOString();
+
+  // Get parent/main branch from environment (or default)
+  const PARENT_BRANCH = process.env.TMUX_WORKTREE_PARENT_BRANCH || '';
+  const MAIN_BRANCH = process.env.TMUX_WORKTREE_MAIN_BRANCH || 'main';
+
   const mergeTarget = PARENT_BRANCH && PARENT_BRANCH !== MAIN_BRANCH
     ? `应当合并到: **${PARENT_BRANCH}** (父分支)\n备选: ${MAIN_BRANCH} (如果 ${PARENT_BRANCH} 已被合并)`
     : `应当合并到: **${MAIN_BRANCH}**`;
+
   const progressTemplate = `# Task Progress
 
 ## Status
@@ -178,6 +184,7 @@ if (process.env.TMUX) {
 const WINDOW_NAME = TASK_NAME.replace(/[^a-zA-Z0-9-]/g, '-').slice(0, 20);
 
 // Get parent branch from environment or default to main/master
+// (Already read earlier for progress template; keep for later usage)
 let PARENT_BRANCH = process.env.TMUX_WORKTREE_PARENT_BRANCH || '';
 let MAIN_BRANCH = process.env.TMUX_WORKTREE_MAIN_BRANCH || 'main';
 
