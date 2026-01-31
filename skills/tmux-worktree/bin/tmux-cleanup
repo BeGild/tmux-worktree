@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+import { run } from '../scripts/index.js';
+// Prepend 'cleanup' to argv so index.js routes correctly
+process.argv.splice(2, 0, 'cleanup');
+await run(process.argv.slice(2));
