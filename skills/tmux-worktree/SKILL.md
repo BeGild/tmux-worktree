@@ -26,25 +26,31 @@ Before calling `tmux-worktree setup`, **you MUST structure your prompt** followi
 # Task: {任务名称}
 
 ## Context
+
 - **Branch**: {分支名}
 - **Worktree**: {worktree相对路径}
 
 ## Objective
+
 {清晰描述任务目标，1-2句话}
 
 ## Original Request
+
 {用户的原始请求内容}
 
 ## Constraints
+
 - 工作目录限制在当前 worktree 内
 - 完成后更新 .tmux-worktree/progress.md 记录结果
 - 遵循项目的代码规范
 
 ## Success Criteria
+
 {明确任务完成的验收标准}
 ```
 
 **Example:**
+
 ```
 # Task: Add OAuth2 Login
 
@@ -203,11 +209,13 @@ When creating a worktree, the system records which branch you started from (pare
 
 ```markdown
 ## Branch Info
+
 - **Current Branch**: feature/my-task
-- **Parent Branch**: feature/parent-task  <-- The branch you started from
+- **Parent Branch**: feature/parent-task <-- The branch you started from
 - **Main Branch**: master
 
 ## Merge Target
+
 应当合并到: **feature/parent-task** (父分支)
 
 > ⚠️ **重要**: 创建 PR 时请确认目标分支是 **feature/parent-task** 而不是 master!
