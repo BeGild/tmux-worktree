@@ -183,7 +183,7 @@ Remove completed worktrees after preserving results.
 **AI Responsibility:**
 
 - ALWAYS run `list` before cleanup to show current state
-- **Now shows Status from progress.md (In Progress/Completed/Blocked/Abandoned)**
+- **Shows Status from progress.md (In Progress/Waiting for User/Completed/Blocked/Abandoned)**
 - Offer to display progress.md before removing worktrees
 - Guide user through interactive cleanup prompts
 - Confirm removal was successful
@@ -194,6 +194,23 @@ Remove completed worktrees after preserving results.
 
 - Base: `feature/<task-slug>`
 - If exists: `feature/<task-slug>-2`, `-3`, etc.
+
+### Task Name Requirements
+
+**IMPORTANT:** Task names must contain English letters (a-z) or numbers (0-9).
+
+- Use English names only: `add-oauth2-login`, `fix-login-bug`, `setup-dev-env`
+- Chinese or other non-ASCII characters are NOT supported and will cause an error
+- Special characters will be converted to hyphens
+
+**Good examples:**
+- `add-user-auth` → `feature/add-user-auth`
+- `fix API endpoint` → `feature/fix-api-endpoint`
+- `Setup Project v2` → `feature/setup-project-v2`
+
+**Bad examples (will fail):**
+- `搭建开发环境` → Error: no English letters
+- `添加用户认证` → Error: no English letters
 
 ## Parent Branch Tracking
 

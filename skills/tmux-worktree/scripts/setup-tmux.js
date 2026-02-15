@@ -112,7 +112,16 @@ try {
   const progressTemplate = `# Task Progress
 
 ## Status
-**In Progress** | Completed | Blocked | Abandoned
+**In Progress** | Waiting for User | Completed | Blocked | Abandoned
+
+<!--
+状态说明（选择加粗一个）:
+- **In Progress**: 正在工作，需要继续执行任务（不能停止）
+- **Waiting for User**: 需要用户决策、确认或输入才能继续（允许停止等待用户）
+- **Completed**: 任务已完成（无未提交更改时允许停止）
+- **Blocked**: 被外部因素阻塞，如依赖未就绪、API 问题等（允许停止）
+- **Abandoned**: 任务已放弃（允许停止）
+-->
 
 ## Branch Info
 - **Current Branch**: {当前分支名}

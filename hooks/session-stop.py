@@ -36,12 +36,12 @@ def extract_status(content):
     status_section = content.split("## Status")[1].split("##")[0]
 
     # 优先查找加粗的状态 **Status**
-    for status in ["In Progress", "Completed", "Blocked", "Abandoned"]:
+    for status in ["In Progress", "Completed", "Blocked", "Abandoned", "Waiting for User"]:
         if f"**{status}**" in status_section:
             return status
 
     # 如果没有找到加粗状态，返回第一个匹配的状态（向后兼容）
-    for status in ["In Progress", "Completed", "Blocked", "Abandoned"]:
+    for status in ["In Progress", "Completed", "Blocked", "Abandoned", "Waiting for User"]:
         if status in status_section:
             return status
 
@@ -70,7 +70,16 @@ def generate_progress_template(git_info):
     return f"""# Task Progress
 
 ## Status
-**In Progress** | Completed | Blocked | Abandoned
+**In Progress** | Waiting for User | Completed | Blocked | Abandoned
+
+<!--
+状态说明（选择加粗一个）:
+- **In Progress**: 正在工作，需要继续执行任务（不能停止）
+- **Waiting for User**: 需要用户决策、确认或输入才能继续（允许停止等待用户）
+- **Completed**: 任务已完成（无未提交更改时允许停止）
+- **Blocked**: 被外部因素阻塞，如依赖未就绪、API 问题等（允许停止）
+- **Abandoned**: 任务已放弃（允许停止）
+-->
 
 ## Progress Log
 
@@ -172,6 +181,10 @@ def main():
                 elif status == "Abandoned":
                     sys.exit(0)
 
+                elif status == "Waiting for User":
+                    # AI 正在等待用户决策，允许停止
+                    sys.exit(0)
+
                 elif status == "In Progress":
                     # 读取 prompt.md 获取上下文
                     objective = ""
@@ -198,7 +211,22 @@ def main():
                     template = generate_progress_template(git_info)
                     output = {
                         "decision": "block",
-                        "reason": f"## 任务还在进行中\n\n**当前分支**: `{current_branch}`\n\n**任务目标**: {objective}\n\n**当前 Status 是 In Progress**，请继续完成任务。\n\n如果任务已完成，请更新 progress.md：\n\n```markdown\n{template}\n```"
+                        "reason": f"""## 任务还在进行中
+
+**当前分支**: `{current_branch}`
+**任务目标**: {objective}
+
+**当前 Status 是 In Progress**，请选择合适的操作：
+
+1. **继续工作** - 保持 `**In Progress**` 状态，继续完成任务
+2. **等待用户决策** - 改为 `**Waiting for User**` 状态，允许停止等待用户
+3. **任务完成** - 改为 `**Completed**` 状态（需确保无未提交更改）
+
+如果需要更新状态，请编辑 progress.md：
+
+```markdown
+{template}
+```"""
                     }
                     print(json.dumps(output, ensure_ascii=False, indent=2))
                     sys.exit(0)

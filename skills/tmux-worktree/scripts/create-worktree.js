@@ -54,9 +54,13 @@ try {
 }
 
 // Slugify - match shell behavior exactly (underscores become hyphens)
-const SLUG = TASK_NAME.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+let SLUG = TASK_NAME.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+
+// If slug is empty (e.g., Chinese characters only), return error
 if (!SLUG) {
-  console.error('Error: Task name results in empty slug');
+  console.error('Error: Task name must contain English letters or numbers.');
+  console.error('提示: 任务名称必须包含英文字母或数字，不支持纯中文命名。');
+  console.error('Example: "setup-dev-env" instead of "搭建开发环境"');
   process.exit(1);
 }
 

@@ -47,7 +47,7 @@ for (const block of blocks) {
     const content = readFileSync(progressPath, 'utf-8');
 
     // 提取 Status 字段
-    const statusMatch = content.match(/## Status\s+\*\*(In Progress|Completed|Blocked|Abandoned)\*\*/);
+    const statusMatch = content.match(/## Status\s+\*\*(In Progress|Waiting for User|Completed|Blocked|Abandoned)\*\*/);
     if (statusMatch) {
       progressStatus = statusMatch[1];
     } else {
