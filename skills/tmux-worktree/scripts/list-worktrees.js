@@ -44,7 +44,10 @@ for (const block of blocks) {
   let progressStatus = '-';
   try {
     const progressPath = `${path}/.tmux-worktree/progress.md`;
-    const content = readFileSync(progressPath, 'utf-8');
+    let content = readFileSync(progressPath, 'utf-8');
+
+    // 移除 HTML 注释，避免匹配到注释中的状态说明
+    content = content.replace(/<!--[\s\S]*?-->/g, '');
 
     // 提取 Status 字段
     const statusMatch = content.match(/## Status\s+\*\*(In Progress|Waiting for User|Completed|Blocked|Abandoned)\*\*/);

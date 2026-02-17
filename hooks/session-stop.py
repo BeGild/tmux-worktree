@@ -35,6 +35,9 @@ def extract_status(content):
 
     status_section = content.split("## Status")[1].split("##")[0]
 
+    # 移除 HTML 注释，避免匹配到注释中的状态说明
+    status_section = re.sub(r'<!--.*?-->', '', status_section, flags=re.DOTALL)
+
     # 优先查找加粗的状态 **Status**
     for status in ["In Progress", "Completed", "Blocked", "Abandoned", "Waiting for User"]:
         if f"**{status}**" in status_section:
